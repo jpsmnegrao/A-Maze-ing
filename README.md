@@ -21,3 +21,14 @@ Required additions:
 ◦ What worked well and what could be improved
 ◦ Have you used any specific tools? Which ones?
 If you implement advanced features (multiple algorithms, display options)
+
+
+#1 - start
+
+1. Create basic project structure, repo, read PDF, decide on algorithms and 
+   what to implement, work division.
+2. Maze generation - DFS
+3. Maze solving - BFS
+4. Visual representation - MLX Library
+5. Coded Makefile
+6. Created requirements.txt and decided on dependencies to use
