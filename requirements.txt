@@ -1,3 +1,5 @@
+# Project dependencies - external packages needed to run the project
+
 mlx
 flake8==7.1.0
 mypy==1.11.1

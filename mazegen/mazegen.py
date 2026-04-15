@@ -1,0 +1,4 @@
+"""
+Module: mazegen
+mambo.
+"""

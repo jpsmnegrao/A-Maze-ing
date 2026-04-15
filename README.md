@@ -34,10 +34,16 @@ Project todos:
 6. Test writing -> pytest
 7. Package setup -> mazegen-*.whl
 
-#1 - project start - 13/04
+#1 (13/04) - project start
+#2 (14/04) - made most of the parser, needs breaking down in smaller functions
+#3 (15/04) - broke parser into int, coords, str and bool processors
+           - started tests folder, created first test - didnt work - requires
+             packaging setup
+           - started toml setup
 
 1. Create basic project structure, repo, read PDF, decide on algorithms and
    what to implement, work division.
+2. Parser programming
 2. Maze generation - DFS
 3. Maze solving - BFS
 4. Visual representation - MLX Library
