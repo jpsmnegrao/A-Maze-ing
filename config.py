@@ -9,14 +9,37 @@ from typing import Dict, Any, List
 
 
 class ParserReturn:
-    """mambo"""
+    """
+    Parser for maze configuration files.
+
+    Reads and validates configuration parameters from a text file for maze
+    generation.
+    """
 
     def __init__(self, filename: str) -> None:
-        """jambo"""
+        """
+        Initialize the configuration parser.
+
+        Args:
+            filename: Path to the configuration file
+        """
         self.filename = filename
 
     def parse_config(self) -> Dict[str, Any]:
-        """jambo"""
+        """
+        Parse and validate the complete maze configuration file.
+
+        Reads the configuration file, parses all key-value pairs, validates
+        required fields, and performs logical validation on the complete
+        configuration.
+
+        Returns:
+            A dictionary containing all validated configuration parameters
+
+        Raises:
+            ValueError: If the file is not found, has invalid format, missing
+                        required fields, or contains invalid values
+        """
         maze_config: Dict[str, Any] = {}
         try:
             with open(self.filename, 'r') as configs:
@@ -32,64 +55,17 @@ class ParserReturn:
                     if key in maze_config:
                         raise ValueError(f"Duplicate key found: {key}")
                     if key == "WIDTH":
-                        try:
-                            width: int = int(value)
-                            if 4 <= width <= 1024:
-                                maze_config["WIDTH"] = width
-                            else:
-                                raise ValueError("Invalid width given to maze "
-                                                 "generator!")
-                        except ValueError:
-                            raise ValueError("Width given to maze generator "
-                                             "must be an integer!")
+                        maze_config["WIDTH"] = self.parse_int(key, value)
                     elif key == "HEIGHT":
-                        try:
-                            height: int = int(value)
-                            if 4 <= height <= 1024:
-                                maze_config["HEIGHT"] = height
-                            else:
-                                raise ValueError("Invalid height given to maze"
-                                                 " generator!")
-                        except ValueError:
-                            raise ValueError("Height given to maze generator "
-                                             "must be an integer!")
+                        maze_config["HEIGHT"] = self.parse_int(key, value)
                     elif key == "ENTRY":
-                        try:
-                            parts: list[str] = value.split(',')
-                            if len(parts) != 2:
-                                raise ValueError("ENTRY format incorrect: x,y")
-                            x: int = int(parts[0].strip())
-                            y: int = int(parts[1].strip())
-                            maze_config["ENTRY"] = (x, y)
-                        except ValueError:
-                            raise ValueError("Invalid entry point given to "
-                                             "maze generator!")
+                        maze_config["ENTRY"] = self.parse_coords(key, value)
                     elif key == "EXIT":
-                        try:
-                            parts = value.split(',')
-                            if len(parts) != 2:
-                                raise ValueError("EXIT format incorrect: x,y")
-                            x = int(parts[0].strip())
-                            y = int(parts[1].strip())
-                            maze_config["EXIT"] = (x, y)
-                        except ValueError:
-                            raise ValueError("Invalid exit point given to "
-                                             "maze generator!")
+                        maze_config["EXIT"] = self.parse_coords(key, value)
                     elif key == "OUTPUT_FILE":
-                        filename: str = value.strip()
-                        if filename:
-                            maze_config["OUTPUT_FILE"] = filename
-                        else:
-                            raise ValueError("Invalid filename given to maze "
-                                             "generator!")
+                        maze_config["OUTPUT_FILE"] = self.parse_str(key, value)
                     elif key == "PERFECT":
-                        perfect: str = value.strip().lower()
-                        if perfect in ("true", "false"):
-                            maze_config["PERFECT"] = perfect == "true"
-                        else:
-                            raise ValueError("Invalid maze perfection "
-                                             "indication given to maze "
-                                             "generator!")
+                        maze_config["PERFECT"] = self.parse_bool(key, value)
                     else:
                         raise ValueError(f"Unknown key found: {key}")
             required_fields: List[str] = ["WIDTH", "HEIGHT", "ENTRY", "EXIT",
@@ -101,6 +77,8 @@ class ParserReturn:
                                  f"{missing_fields}")
             if maze_config["ENTRY"] == maze_config["EXIT"]:
                 raise ValueError("Entry and Exit points cannot be the same!")
+            width = maze_config["WIDTH"]
+            height = maze_config["HEIGHT"]
             if width < 11 or height < 9:
                 print("Warning: Maze is not big enough for 42 pattern.")
             entry_x, entry_z = maze_config["ENTRY"]
@@ -114,3 +92,97 @@ class ParserReturn:
             raise ValueError(f"Config file '{self.filename}' not found")
         except Exception as error:
             raise ValueError(f"Config parsing error: {error}")
+
+    @staticmethod
+    def parse_int(key: str, value: str) -> int:
+        """
+        Parse and validate an integer configuration value.
+
+        Args:
+            key: The configuration key name (e.g., 'WIDTH', 'HEIGHT')
+            value: The raw string value to parse
+
+        Returns:
+            The parsed integer value
+
+        Raises:
+            ValueError: If value is not an integer or not in range 4-1024
+        """
+        try:
+            result: int = int(value)
+        except ValueError:
+            raise ValueError(f"{key} given to maze generator must be an "
+                             "integer!")
+        if 4 <= result <= 1024:
+            return result
+        else:
+            raise ValueError(f"Invalid {key.lower()} given to maze generator!")
+
+    @staticmethod
+    def parse_coords(key: str, value: str) -> tuple[int, int]:
+        """
+        Parse and validate coordinate configuration value.
+
+        Args:
+            key: The configuration key name (e.g., 'ENTRY', 'EXIT')
+            value: The raw string value in format 'x,y'
+
+        Returns:
+            A tuple of (x, y) integer coordinates
+
+        Raises:
+            ValueError: If format is incorrect or values are not integers
+        """
+        coords: list[str] = value.split(',')
+        if len(coords) != 2:
+            raise ValueError(f"{key} format incorrect: x,y")
+        try:
+            x: int = int(coords[0].strip())
+            y: int = int(coords[1].strip())
+        except ValueError:
+            raise ValueError(f"Invalid {key.lower()} point given to maze "
+                             "generator!")
+        return (x, y)
+
+    @staticmethod
+    def parse_str(key: str, value: str) -> str:
+        """
+        Parse and validate a string configuration value.
+
+        Args:
+            key: The configuration key name
+            value: The raw string value to parse
+
+        Returns:
+            The validated string value
+
+        Raises:
+            ValueError: If the string is empty
+        """
+        filename: str = value.strip()
+        if filename:
+            return filename
+        else:
+            raise ValueError(f"Invalid {key.lower()} given to maze generator!")
+
+    @staticmethod
+    def parse_bool(key: str, value: str) -> bool:
+        """
+        Parse and validate a boolean configuration value.
+
+        Args:
+            key: The configuration key name (e.g., 'PERFECT')
+            value: The raw string value ('true' or 'false', case-insensitive)
+
+        Returns:
+            The parsed boolean value
+
+        Raises:
+            ValueError: If value is not 'true' or 'false'
+        """
+        perfect: str = value.strip().lower()
+        if perfect in ("true", "false"):
+            return perfect == "true"
+        else:
+            raise ValueError("Invalid maze perfection indication given to maze"
+                             " generator!")
