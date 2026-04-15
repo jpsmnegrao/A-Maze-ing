@@ -1,2 +1,5 @@
 /mlx_CLXV/
+/__pycache__/
 /tests/__pycache__/
+/matrix/
+*.egg-info
