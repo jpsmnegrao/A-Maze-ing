@@ -37,15 +37,15 @@ Project todos:
 #1 (13/04) - project start
 #2 (14/04) - made most of the parser, needs breaking down in smaller functions
 #3 (15/04) - broke parser into int, coords, str and bool processors
-           - started tests folder, created first test - didnt work - requires
-             packaging setup
-           - started toml setup
+           - started toml file for package setup
+           - started tests folder, wrote comprehensive tests covering valid
+             configs, missing fields, invalid formats, and edge cases
 
 1. Create basic project structure, repo, read PDF, decide on algorithms and
    what to implement, work division.
 2. Parser programming
-2. Maze generation - DFS
-3. Maze solving - BFS
-4. Visual representation - MLX Library
-5. Coded Makefile
-6. Created requirements.txt and decided on dependencies to use
+3. Maze generation - DFS
+4. Maze solving - BFS
+5. Visual representation - MLX Library
+6. Coded Makefile
+7. Created requirements.txt and decided on dependencies to use
