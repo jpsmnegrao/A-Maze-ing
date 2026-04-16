@@ -1,0 +1,15 @@
+[] Wilson's Algorithm
+    [] Create maze grid
+    [] Get random point
+        [] walk
+            [] Choose direction and start making path
+            [] If maze point encountered - LOOP
+            [] If self or edge found
+                [] Remove current walk
+                [] LOOP
+        [] LOOP
+    [] If no random points can be found, return map
+
+[] Bonus Algorithms
+    [] Backtracking
+    [] Kruskal's Algorithm
