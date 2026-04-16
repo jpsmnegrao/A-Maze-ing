@@ -27,7 +27,7 @@ If you implement advanced features (multiple algorithms, display options)
 Project todos:
 
 1. ~~Project structure (Makefile, requirements.txt, venv, .gitignore, README.md)~~
-2. Parse config.txt -> seed, width, height, etc.
+2. ~~Parse config.txt -> seed, width, height, etc.~~
 3. Maze generation -> algorithm + seed reproducibility - DFS
 4. Maze rendering -> MLX window
 5. Maze solving -> pathfinding - BFS
@@ -40,10 +40,12 @@ Project todos:
            - started toml file for package setup
            - started tests folder, wrote comprehensive tests covering valid
              configs, missing fields, invalid formats, and edge cases
+#4 (16/04) - got project partner, divided workload, started looking into MLX 
 
-1. Create basic project structure, repo, read PDF, decide on algorithms and
+
+1. ~~Create basic project structure, repo, read PDF,~~ decide on algorithms and
    what to implement, work division.
-2. Parser programming
+2. [x] Parser programming
 3. Maze generation - DFS
 4. Maze solving - BFS
 5. Visual representation - MLX Library
