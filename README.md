@@ -66,7 +66,9 @@ Project todos:
            - started toml file for package setup
            - started tests folder, wrote comprehensive tests covering valid
              configs, missing fields, invalid formats, and edge cases
-#4 (16/04) - got project partner, divided workload, started looking into MLX 
+#4 (16/04) - got project partner, divided workload, started looking into MLX
+#5 (17/04) - not much time into it today, started mlx setup, been able to open
+             a window and draw a 42 pattern on it 
 
 
 1. ~~Create basic project structure, repo, read PDF,~~ decide on algorithms and
