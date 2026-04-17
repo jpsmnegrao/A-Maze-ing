@@ -1,11 +1,11 @@
 """
 Version 2.1
-Module: renderer_mlx
+Module: mlx_renderer
 mambo.
 """
 
 
-from mlx import Mlx
+from mlx import Mlx  # type: ignore
 
 
 def mymouse(button, x, y, mystuff):
