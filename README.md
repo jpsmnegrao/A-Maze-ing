@@ -4,6 +4,32 @@ This project has been created as part of the 42 curriculum by <login1>[, <login2
 
 “Resources” section listing classic references related to the topic (documentation, articles, tutorials, etc.), as well as a description of how AI was used — specifying for which tasks and which parts of the project.
 
+## System Requirements
+
+### Linux (Ubuntu/Debian)
+```bash
+sudo apt update
+sudo apt install libvulkan-dev vulkan-tools libxcb1-dev libxcb-keysyms1-dev xcb-proto python3-full python3-venv```
+
+### Python Dependencies
+Python 3.10 or later is required.
+
+Create and activate a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install project dependencies:
+```bash
+make install
+```
+
+Or manually:
+```bash
+pip install -r requirements.txt
+```
+
 ➠ Additional sections may be required depending on the project (e.g., usage
 examples, feature list, technical choices, etc.).
 
