@@ -1,14 +1,19 @@
-[] Wilson's Algorithm
-    [] Create maze grid
-    [] Get random point
-        [] walk
-            [] Choose direction and start making path
-            [] If maze point encountered - LOOP
-            [] If self or edge found
-                [] Remove current walk
-                [] LOOP
-        [] LOOP
-    [] If no random points can be found, return map
+[x] Wilson's Algorithm
+    [x] Create maze grid
+    [x] Get random point
+        [x] walk
+            [x] Choose direction and start making path
+            [x] If maze point encountered - LOOP
+            [x] If self or edge found
+                [x] Remove current walk
+                [x] LOOP
+        [x] LOOP
+    [x] If no random points can be found, return map
+
+    [] Need to make it so that the first point the maze generator starts from is from EXIT
+    [] Need to make an auto generator of 42
+        [] make it so that the maze doesnt touch the 42
+    [] Reconfigure prints to be usable outputs/returns for MLX
 
 [] Bonus Algorithms
     [] Backtracking
