@@ -69,6 +69,12 @@ Project todos:
 #4 (16/04) - got project partner, divided workload, started looking into MLX
 #5 (17/04) - not much time into it today, started mlx setup, been able to open
              a window and draw a 42 pattern on it 
+#6 (20/04) - worked on rendering a maze in a maze area - made some decisions
+			 about layout, got mazes sowing in window
+#7 (21/04) - been tweaking layout to make everything more visually appealing, the
+	 		 window content more symmetrical - seed is displaying correctly and
+			 with all walls closed, different sizes render mostly ok but
+             margins between maze area and maze borders still need work
 
 
 1. ~~Create basic project structure, repo, read PDF,~~ decide on algorithms and
