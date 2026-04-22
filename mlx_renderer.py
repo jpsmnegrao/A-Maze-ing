@@ -154,13 +154,13 @@ class MazeRenderer:
                 )
                 # Force walls closed for pattern cells and their neighbours
                 north: bool = True if (is_pattern_cell or north_is_pattern) \
-                    else not (cell & N)
+                    else bool(cell & N)
                 south: bool = True if (is_pattern_cell or south_is_pattern) \
-                    else not (cell & S)
+                    else bool(cell & S)
                 west: bool = True if (is_pattern_cell or west_is_pattern) \
-                    else not (cell & W)
+                    else bool(cell & W)
                 east: bool = True if (is_pattern_cell or east_is_pattern) \
-                    else not (cell & E)
+                    else bool(cell & E)
                 # Draw walls for current cell
                 if north:
                     for wall_row in range(self.wall_thickness):
@@ -168,7 +168,7 @@ class MazeRenderer:
                             if self.size_line is not None \
                                     and self.data is not None:
                                 offset: int = (
-                                        (((cell_y + self.cell_size) + wall_row)
+                                        ((cell_y + wall_row)
                                          * self.size_line) + (x * 4)
                                     )
                                 self.data[offset:offset+4] = (
@@ -234,11 +234,19 @@ class MazeRenderer:
                             pixel_y = cell_y + py
                             if self.size_line is not None \
                                     and self.data is not None:
-                                offset = (pixel_y * self.size_line) + (pixel_x
-                                                                       * 4)
-                                self.data[offset:offset+4] = (
-                                    (0xFF888888).to_bytes(4, 'little')
-                                )
+                                if not (
+                                        pixel_x < 0
+                                        or pixel_y < 0
+                                        or pixel_x > self.maze_area_width
+                                        or pixel_y > self.maze_area_height
+                                        ):
+
+                                    offset = (
+                                        pixel_y * self.size_line) + (pixel_x
+                                                                     * 4)
+                                    self.data[offset:offset+4] = (
+                                        (0xFF888888).to_bytes(4, 'little')
+                                    )
         return pattern_col, pattern_row
 
     def mouse_handler(self, button, x, y, mystuff):
@@ -249,6 +257,8 @@ class MazeRenderer:
         print(mystuff)
         if keynum == 32:
             self.mlx.mlx_mouse_hook(self.win_ptr, None, None)
+        if keynum in (52, 65430):
+            self.mlx.mlx_loop_exit(self.mlx_ptr)
 
     def close_handle(self, dummy):
         self.mlx.mlx_loop_exit(self.mlx_ptr)
