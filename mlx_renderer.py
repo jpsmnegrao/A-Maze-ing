@@ -5,8 +5,13 @@ mambo.
 """
 
 
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Optional, Any
 from mlx import Mlx  # type: ignore
+
+
+# TODO: replace with import when generator module is ready
+# from mazegen import N, S, E, W
+N, S, E, W = 1, 2, 4, 8
 
 
 class MazeRenderer:
@@ -30,23 +35,25 @@ class MazeRenderer:
         self.show_path: bool = False
         self.wall_color: int = 0xFFFFFFF
         # MLX objects (initialized in run_renderer)
-        self.mlx = None
-        self.mlx_ptr = None
-        self.win_ptr = None
-        self.image = None
-        self.data = None
-        self.bpp = None
-        self.size_line: int | None = None
-        self.iformat = None
+        self.mlx: Optional[Mlx] = None
+        self.mlx_ptr: Optional[Any] = None
+        self.win_ptr: Optional[Any] = None
+        self.image: Optional[Any] = None
+        self.data: Optional[Any] = None
+        self.bpp: Optional[Any] = None
+        self.size_line: Optional[int] = None
+        self.iformat: Optional[Any] = None
 
-    def run_mlx_renderer(self, maze: List[List[Dict[str, bool]]]) -> None:
+    def run_mlx_renderer(self, maze: List[List[int]]) -> None:
         """mambo"""
         self.mlx = Mlx()
         self.mlx_ptr = self.mlx.mlx_init()
-        self.win_ptr = self.mlx.mlx_new_window(self.mlx_ptr, 
-                       self.window_height, self.window_width, "A-Maze-ing")
-        self.image = self.mlx.mlx_new_image(self.mlx_ptr,
-                     self.window_height, self.window_width)
+        self.win_ptr = self.mlx.mlx_new_window(
+                       self.mlx_ptr, self.window_height, self.window_width,
+                       "A-Maze-ing"
+                )
+        self.image = self.mlx.mlx_new_image(
+                     self.mlx_ptr, self.window_height, self.window_width)
         self.data, self.bpp, self.size_line, self.iformat = (
             self.mlx.mlx_get_data_addr(self.image))
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 309, 15,
@@ -62,10 +69,14 @@ class MazeRenderer:
                                 0xFF333333, '4. Exit')
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 765,
                                 0xFF333333, 'Choose one: ')
-        for y in range(self.maze_area_height + 10):
-            for x in range(self.maze_area_width + 10):
-                offset = (y * self.size_line) + (x * 4)
-                self.data[offset:offset+4] = (0xFF666666).to_bytes(4, 'little')
+        if self.size_line is not None \
+                and self.data is not None:
+            for y in range(self.maze_area_height + 10):
+                for x in range(self.maze_area_width + 10):
+                    offset: int = (y * self.size_line) + (x * 4)
+                    self.data[offset:offset+4] = (
+                        (0xFF666666).to_bytes(4, 'little')
+                    )
         self.draw_maze(maze)
         self.mlx.mlx_put_image_to_window(self.mlx_ptr, self.win_ptr,
                                          self.image, 95, 45)
@@ -74,18 +85,22 @@ class MazeRenderer:
         self.mlx.mlx_hook(self.win_ptr, 33, 0, self.close_handle, None)
         self.mlx.mlx_loop(self.mlx_ptr)
 
-    def draw_maze(self, maze: List[List[Dict[str, bool]]]) -> None:
+    def draw_maze(self, maze: List[List[int]]) -> None:
         """jambo"""
+        # Calculate cell size as the largest size that fits the maze
         self.cell_size = min(
             self.maze_area_width // len(maze[0]),
             self.maze_area_height // len(maze)
         )
         self.wall_thickness = max(1, self.cell_size // 10)
-        maze_pixel_width = len(maze[0]) * self.cell_size
-        maze_pixel_height = len(maze) * self.cell_size
-        start_x = (self.maze_area_width - maze_pixel_width) // 2
-        start_y = (self.maze_area_height - maze_pixel_height) // 2
-        pattern_42 = [
+        # Calculate maze pixel dimensions and centered starting position
+        # within the grey area
+        maze_pixel_width: int = len(maze[0]) * self.cell_size
+        maze_pixel_height: int = len(maze) * self.cell_size
+        start_x: int = (self.maze_area_width - maze_pixel_width) // 2
+        start_y: int = (self.maze_area_height - maze_pixel_height) // 2
+        # Draw 42 pattern if maze is large enough and store its grid position
+        pattern_42: List[List[int]] = [
             [1, 0, 1, 0, 1, 1, 1],
             [1, 0, 1, 0, 0, 0, 1],
             [1, 0, 1, 0, 1, 1, 1],
@@ -93,23 +108,26 @@ class MazeRenderer:
             [0, 0, 1, 0, 1, 0, 0],
             [0, 0, 1, 0, 1, 1, 1],
         ]
-        pattern_col, pattern_row = -1, -1
+        pattern_col: int = -1
+        pattern_row: int = -1
         if self.maze_width > 8 or self.maze_height > 10:
             pattern_col, pattern_row = self.draw_42_pattern(
                 start_x, start_y, len(maze[0]), len(maze), pattern_42)
         for row in range(len(maze)):
             for col in range(len(maze[row])):
-                cell_x = start_x + (col * self.cell_size)
-                cell_y = start_y + (row * self.cell_size)
-                cell: Dict[str, bool] = maze[row][col]
-                p_row = row - pattern_row
-                p_col = col - pattern_col
+                cell_x: int = start_x + (col * self.cell_size)
+                cell_y: int = start_y + (row * self.cell_size)
+                cell: int = maze[row][col]
+                # Check if current cell is part of the 42 pattern
+                p_row: int = row - pattern_row
+                p_col: int = col - pattern_col
                 is_pattern_cell = (
                     pattern_col >= 0 and
                     0 <= p_row < len(pattern_42) and
                     0 <= p_col < len(pattern_42[0]) and
                     pattern_42[p_row][p_col] == 1
                 )
+                # Check if each neighbouring cell is part of the 42 pattern
                 north_is_pattern = (
                     pattern_col >= 0 and
                     0 <= (row - 1) - pattern_row < len(pattern_42) and
@@ -134,38 +152,43 @@ class MazeRenderer:
                     0 <= (col - 1) - pattern_col < len(pattern_42[0]) and
                     pattern_42[row - pattern_row][(col - 1) - pattern_col] == 1
                 )
-                north = True if (is_pattern_cell or north_is_pattern) \
-                    else cell["north"]
-                south = True if (is_pattern_cell or south_is_pattern) \
-                    else cell["south"]
-                west = True if (is_pattern_cell or west_is_pattern) \
-                    else cell["west"]
-                east = True if (is_pattern_cell or east_is_pattern) \
-                    else cell["east"]
+                # Force walls closed for pattern cells and their neighbours
+                north: bool = True if (is_pattern_cell or north_is_pattern) \
+                    else not (cell & N)
+                south: bool = True if (is_pattern_cell or south_is_pattern) \
+                    else not (cell & S)
+                west: bool = True if (is_pattern_cell or west_is_pattern) \
+                    else not (cell & W)
+                east: bool = True if (is_pattern_cell or east_is_pattern) \
+                    else not (cell & E)
+                # Draw walls for current cell
                 if north:
                     for wall_row in range(self.wall_thickness):
                         for x in range(cell_x, cell_x + self.cell_size):
-                            if self.size_line is not None:
-                                offset = (
-                                    (((cell_y + self.cell_size) + wall_row) *
-                                     self.size_line) + (x * 4)
-                                )
+                            if self.size_line is not None \
+                                    and self.data is not None:
+                                offset: int = (
+                                        (((cell_y + self.cell_size) + wall_row)
+                                         * self.size_line) + (x * 4)
+                                    )
                                 self.data[offset:offset+4] = (
                                     (0xFF000000).to_bytes(4, 'little'))
                 if south:
                     for wall_row in range(self.wall_thickness):
                         for x in range(cell_x, cell_x + self.cell_size):
-                            if self.size_line is not None:
+                            if self.size_line is not None \
+                                    and self.data is not None:
                                 offset = (
-                                    (((cell_y + self.cell_size) + wall_row) *
-                                     self.size_line) + (x * 4)
-                                )
+                                        (((cell_y + self.cell_size) + wall_row)
+                                         * self.size_line) + (x * 4)
+                                    )
                                 self.data[offset:offset+4] = (
                                     (0xFF000000).to_bytes(4, 'little'))
                 if west:
                     for wall_col in range(self.wall_thickness):
                         for y in range(cell_y, cell_y + self.cell_size):
-                            if self.size_line is not None:
+                            if self.size_line is not None \
+                                    and self.data is not None:
                                 offset = (
                                     (y * self.size_line) +
                                     ((cell_x + wall_col) * 4)
@@ -175,7 +198,8 @@ class MazeRenderer:
                 if east:
                     for wall_col in range(self.wall_thickness):
                         for y in range(cell_y, cell_y + self.cell_size):
-                            if self.size_line is not None:
+                            if self.size_line is not None \
+                                    and self.data is not None:
                                 offset = (
                                     (y * self.size_line) +
                                     ((cell_x + self.cell_size + wall_col) * 4)
@@ -208,9 +232,13 @@ class MazeRenderer:
                         for px in range(self.cell_size):
                             pixel_x = cell_x + px
                             pixel_y = cell_y + py
-                            offset = (pixel_y * self.size_line) + (pixel_x * 4)
-                            self.data[offset:offset+4] = (0xFF888888).to_bytes(
-                                4, 'little')
+                            if self.size_line is not None \
+                                    and self.data is not None:
+                                offset = (pixel_y * self.size_line) + (pixel_x
+                                                                       * 4)
+                                self.data[offset:offset+4] = (
+                                    (0xFF888888).to_bytes(4, 'little')
+                                )
         return pattern_col, pattern_row
 
     def mouse_handler(self, button, x, y, mystuff):
