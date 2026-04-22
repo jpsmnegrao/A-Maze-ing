@@ -245,7 +245,7 @@ class MazeRenderer:
                                         pixel_y * self.size_line) + (pixel_x
                                                                      * 4)
                                     self.data[offset:offset+4] = (
-                                        (0xFF888888).to_bytes(4, 'little')
+                                        (0xFF333333).to_bytes(4, 'little')
                                     )
         return pattern_col, pattern_row
 
