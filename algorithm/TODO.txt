@@ -10,8 +10,8 @@
         [x] LOOP
     [x] If no random points can be found, return map
 
-    [] Need to make it so that the first point the maze generator starts from is from EXIT
-    [] Need to make an auto generator of 42
+    [x] Need to make it so that the first point the maze generator starts from is from EXIT
+    [x] Need to make an auto generator of 42
         [] make it so that the maze doesnt touch the 42
     [] Reconfigure prints to be usable outputs/returns for MLX
 

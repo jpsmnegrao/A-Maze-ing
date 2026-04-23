@@ -29,6 +29,7 @@ class Maze(Maze_Handler):
         super().__init__(config)
         self.grid: list = [[0 for _ in range(self.width)]
                            for _ in range(self.height)]
+        self.insert_logo()
         self.N, self.S, self.E, self.W = 1, 2, 4, 8
         self.dir_x: dict = {self.E: 1, self.W: -1, self.N: 0, self.S: 0}
         self.dir_y: dict = {self.E: 0, self.W: 0, self.N: 1, self.S: -1}
@@ -36,6 +37,40 @@ class Maze(Maze_Handler):
                                self.S: self.N}
         self.marked_cell: int = 16
         self.out_file: str = config["OUTPUT_FILE"]
+        self.first = True
+
+    def insert_logo(self) -> None:
+        maze_center: tuple = (int(self.width / 2), int(self.height / 2))
+        base_logo: list = [
+            [
+                [maze_center[0] - 3,
+                 maze_center[0] + 1, maze_center[0] + 2, maze_center[0] + 3],
+                maze_center[1] - 2
+                ],
+            [
+                [maze_center[0] - 3, maze_center[0] + 3],
+                maze_center[1] - 1
+                ],
+            [
+                [maze_center[0] - 3, maze_center[0] - 2, maze_center[0] - 1,
+                 maze_center[0] + 1, maze_center[0] + 2, maze_center[0] + 3],
+                maze_center[1]
+                ],
+            [
+                [maze_center[0] - 1,
+                 maze_center[0] + 1],
+                maze_center[1] + 1
+                ],
+            [
+                [maze_center[0] - 1,
+                 maze_center[0] + 1, maze_center[0] + 2, maze_center[0] + 3],
+                maze_center[1] + 2
+                ]
+        ]
+
+        for row in base_logo:
+            for x_vals in row[0]:
+                self.grid[x_vals][row[1]] = 42
 
     # draw maze func that returns the current state of the maze to print
     def print_maze(self, cell_x: int | None = None, cell_y: int | None = None,
@@ -44,6 +79,7 @@ class Maze(Maze_Handler):
         sym_path: str = "+"
         sym_empty: str = " "
         sym_current_cell: str = "[]"
+        sym_logo: str = "F"
         width_count: int = 0
 
         for y, row in enumerate(self.grid):
@@ -55,6 +91,8 @@ class Maze(Maze_Handler):
                     symbol = sym_empty
                 elif path and (x, y) in path:
                     symbol = sym_path
+                elif self.grid[x][y] == 42:
+                    symbol = sym_logo
                 print(symbol, end="")
             width_count += 1
             print(width_count)
@@ -68,8 +106,12 @@ class Maze(Maze_Handler):
     # this will draw and sleep between each new cell it has walked
     def walk(self) -> list:
         while True:
-            cell_y: int = random.randint(0, self.height - 1)
-            cell_x: int = random.randint(0, self.width - 1)
+            if self.first is True:
+                cell_y, cell_x = self.exit[0], self.exit[1]
+                self.first = False
+            else:
+                cell_y: int = random.randint(0, self.height - 1)
+                cell_x: int = random.randint(0, self.width - 1)
             if self.grid[cell_y][cell_x] != 0:
                 continue
 
@@ -96,11 +138,11 @@ class Maze(Maze_Handler):
                         if 0 <= next_y < self.height:
                             walked[(cell_x, cell_y)] = dir
                             if self.grid[next_y][next_x] != 0:
-                                break
-                            else:
-                                cell_x, cell_y = next_x, next_y
-                                searching = True
-                                break
+                                if self.grid[next_y][next_x] != 42:
+                                    break
+                            cell_x, cell_y = next_x, next_y
+                            searching = True
+                            break
 
             path = []
             x, y = init_x, init_y
@@ -120,7 +162,7 @@ class Maze(Maze_Handler):
     def generate_maze(self) -> list:
         entry_x, entry_y = self.entry[0], self.entry[1]
         self.grid[entry_x][entry_y] = self.marked_cell
-        remaining_cells = self.width * self.height - 2
+        remaining_cells = self.width * self.height - 20
 
         while remaining_cells > 0:
             for x, y, dir in self.walk():
