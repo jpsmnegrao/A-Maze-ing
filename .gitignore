@@ -3,3 +3,4 @@
 /tests/__pycache__/
 /matrix/
 *.egg-info
+config.txt
