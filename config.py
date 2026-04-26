@@ -66,6 +66,8 @@ class ParserReturn:
                         maze_config["OUTPUT_FILE"] = self.parse_str(key, value)
                     elif key == "PERFECT":
                         maze_config["PERFECT"] = self.parse_bool(key, value)
+                    elif key == "SEED":
+                        maze_config["SEED"] = self.parse_int(key, value)
                     else:
                         raise ValueError(f"Unknown key found: {key}")
             required_fields: List[str] = ["WIDTH", "HEIGHT", "ENTRY", "EXIT",
@@ -99,21 +101,24 @@ class ParserReturn:
         Parse and validate an integer configuration value.
 
         Args:
-            key: The configuration key name (e.g., 'WIDTH', 'HEIGHT')
+            key: The configuration key name (e.g., 'WIDTH', 'HEIGHT', 'SEED')
             value: The raw string value to parse
 
         Returns:
             The parsed integer value
 
         Raises:
-            ValueError: If value is not an integer or not in range 4-1024
+            ValueError: If value is not an integer or (for non-SEED keys)
+                        not in range 4-1024
         """
         try:
             result: int = int(value)
         except ValueError:
             raise ValueError(f"{key} given to maze generator must be an "
                              "integer!")
-        if 4 <= result <= 1024:
+        if key == "SEED":
+            return result
+        elif 4 <= result <= 1024:
             return result
         else:
             raise ValueError(f"Invalid {key.lower()} given to maze generator!")
