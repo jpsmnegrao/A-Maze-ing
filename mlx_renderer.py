@@ -11,7 +11,7 @@ from mlx import Mlx  # type: ignore
 
 # TODO: replace with import when generator module is ready
 # from mazegen import N, S, E, W
-N, S, E, W = 1, 2, 4, 8
+N, E, S, W = 1, 2, 4, 8
 
 
 class MazeRenderer:
@@ -20,18 +20,18 @@ class MazeRenderer:
     def __init__(self, config: Dict[str, Any]) -> None:
         """jambo"""
         self.config = config
-        self.window_width = 800
-        self.window_height = 800
-        self.maze_width = config["WIDTH"]
-        self.maze_height = config["HEIGHT"]
-        self.entry = config["ENTRY"]
-        self.exit = config["EXIT"]
-        self.output_file = config["OUTPUT_FILE"]
-        self.perfect = config["PERFECT"]
-        self.maze_area_width = 610
-        self.maze_area_height = 610
-        self.cell_size = 0
-        self.wall_thickness = max(1, self.cell_size // 10)
+        self.window_width: int = 800
+        self.window_height: int = 800
+        self.maze_width: int = config["WIDTH"]
+        self.maze_height: int = config["HEIGHT"]
+        self.entry: Tuple[int, int] = config["ENTRY"]
+        self.exit: Tuple[int, int] = config["EXIT"]
+        self.output_file: str = config["OUTPUT_FILE"]
+        self.perfect: bool = config["PERFECT"]
+        self.maze_area_width: int = 610
+        self.maze_area_height: int = 610
+        self.cell_size: int = 0
+        self.wall_thickness: int = max(1, self.cell_size // 10)
         self.show_path: bool = False
         self.maze: List[List[int]] = []
         self.path: List[List[int]] = []
@@ -99,7 +99,6 @@ class MazeRenderer:
                         (self.color_maze_area).to_bytes(4, 'little')
                     )
         self.draw_maze(maze)
-
         self.mlx.mlx_put_image_to_window(self.mlx_ptr, self.win_ptr,
                                          self.bg_image, 0, 0)
         self.mlx.mlx_put_image_to_window(self.mlx_ptr, self.win_ptr,
@@ -252,6 +251,7 @@ class MazeRenderer:
                                 )
                                 self.data[offset:offset+4] = (
                                     (self.color_wall).to_bytes(4, 'little'))
+        self.draw_entry_exit(start_x, start_y)
 
     def draw_42_pattern(self, start_x: int, start_y: int,
                         len_maze_cols: int, len_maze_rows: int,
@@ -309,11 +309,11 @@ class MazeRenderer:
             },
             {
                 "theme_name": "Negative",
-                "color_window_bg": 0xFFD0D0D0,
-                "color_maze_area": 0xFFB0B0B0,
-                "color_wall": 0xFF404040,
-                "color_pattern": 0xFF888888,
-                "color_text": 0xFF303030,
+                "color_window_bg": 0xFFBBBBBB,
+                "color_maze_area": 0xFF999999,
+                "color_wall": 0xFF222222,
+                "color_pattern": 0xFF666666,
+                "color_text": 0xFF222222,
             },
             {
                 "theme_name": "42",
@@ -328,6 +328,30 @@ class MazeRenderer:
         for key, value in themes[self.current_theme].items():
             if key != "name":
                 setattr(self, key, value)
+
+    def draw_entry_exit(self, start_x: int, start_y: int) -> None:
+        """jambo"""
+        entry_x: int = start_x + (self.entry[0] * self.cell_size)
+        entry_y: int = start_y + (self.entry[1] * self.cell_size)
+        exit_x: int = start_x + (self.exit[0] * self.cell_size)
+        exit_y: int = start_y + (self.exit[1] * self.cell_size)
+        for py in range(self.cell_size):
+            for px in range(self.cell_size):
+                if px < self.wall_thickness or py < self.wall_thickness:
+                    continue
+                if self.size_line is not None and self.data is not None:
+                    entry_offset: int = (
+                        ((entry_y + py) * self.size_line) +
+                        ((entry_x + px) * 4)
+                    )
+                    self.data[entry_offset: entry_offset+4] = (
+                        (0xFF00CC00).to_bytes(4, 'little'))
+                    exit_offset: int = (
+                        ((exit_y + py) * self.size_line) +
+                        ((exit_x + px) * 4)
+                    )
+                    self.data[exit_offset: exit_offset+4] = (
+                        (0xFFCC0000).to_bytes(4, 'little'))
 
     def mouse_handler(self, button, x, y, mystuff):
         print(f"Got mouse event! button {button} at {x},{y}.")
