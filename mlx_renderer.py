@@ -32,9 +32,41 @@ class MazeRenderer:
         self.maze_area_height: int = 610
         self.cell_size: int = 0
         self.wall_thickness: int = max(1, self.cell_size // 10)
+        self.start_x: int = 0
+        self.start_y: int = 0
+        self.anim_index: int = 0
+        self.animation_frames: List[Tuple[int, int, int]] = [
+            (0, 0, 13), (1, 0, 7), (1, 0, 5), (2, 0, 7), (2, 0, 3),
+            (2, 1, 14), (2, 1, 10), (2, 2, 14), (2, 2, 10), (2, 3, 14),
+            (2, 3, 12), (3, 3, 7), (3, 3, 5), (4, 3, 7), (4, 3, 3),
+            (4, 4, 14), (4, 4, 10), (4, 5, 14), (4, 5, 10), (4, 6, 14),
+            (4, 6, 10), (4, 7, 14), (4, 7, 6), (3, 7, 13), (3, 7, 5),
+            (2, 7, 13), (2, 7, 5), (1, 7, 13), (1, 7, 12), (1, 6, 11),
+            (1, 6, 3), (0, 6, 13), (0, 6, 9), (0, 7, 14), (0, 7, 10),
+            (0, 8, 14), (0, 8, 12), (1, 8, 7), (1, 8, 5), (2, 8, 7),
+            (2, 8, 5), (3, 8, 7), (3, 8, 5), (4, 8, 7), (4, 8, 5),
+            (5, 8, 7), (5, 8, 5), (6, 8, 7), (6, 8, 5), (7, 8, 7),
+            (7, 8, 6), (7, 7, 11), (7, 7, 3), (6, 7, 13), (6, 7, 5),
+            (5, 7, 13), (7, 7, 1), (8, 7, 7), (8, 7, 6), (8, 6, 11),
+            (8, 6, 10), (8, 5, 11), (8, 5, 10), (8, 4, 11), (8, 4, 10),
+            (8, 3, 11), (8, 3, 10), (8, 2, 11), (8, 2, 10), (8, 1, 11),
+            (8, 1, 3), (7, 1, 13), (7, 1, 12), (7, 0, 11), (7, 0, 9),
+            (8, 0, 7), (7, 0, 1), (6, 0, 13), (6, 0, 5), (5, 0, 13),
+            (5, 0, 5), (4, 0, 13), (4, 0, 9), (4, 1, 14), (4, 1, 6),
+            (3, 1, 13), (3, 1, 12), (3, 0, 11), (3, 1, 8), (3, 2, 14),
+            (3, 2, 12), (4, 2, 7), (4, 1, 4), (5, 1, 7), (5, 1, 5),
+            (6, 1, 7), (8, 5, 2), (7, 5, 13), (7, 5, 5), (6, 5, 13),
+            (8, 7, 2), (8, 8, 14), (0, 6, 8), (0, 5, 11), (0, 5, 10),
+            (0, 4, 11), (0, 4, 10), (0, 3, 11), (0, 3, 10), (0, 2, 11),
+            (0, 2, 10), (0, 1, 11), (0, 1, 9), (1, 1, 7), (0, 5, 8),
+            (1, 5, 7), (1, 5, 5), (2, 5, 7), (2, 5, 3), (2, 6, 14),
+            (4, 3, 1), (5, 3, 7), (5, 3, 5), (6, 3, 7),
+        ]
         self.show_path: bool = False
         self.maze: List[List[int]] = []
-        self.path: List[str] = ['E', 'E', 'E', 'E', 'E', 'S', 'S', 'S', 'S',
+        self.path: List[str] = ['E', 'E', 'S', 'S', 'S', 'E', 'E', 'S', 'S',
+                                'S', 'S', 'W', 'W', 'W', 'N', 'W', 'S', 'S',
+                                'E', 'E', 'E', 'E', 'E', 'E', 'E', 'N', 'E',
                                 'S']
         # MLX objects (initialized in run_renderer)
         self.mlx: Optional[Mlx] = None
@@ -57,10 +89,10 @@ class MazeRenderer:
         self.color_pattern: int = 0xFF333333
         self.color_text: int = 0xFF333333
         self.color_path: int = 0xFFCCCCCC
+        self.color_cell_bg: int = 0xFF888888
 
     def run_mlx_renderer(self, maze: List[List[int]]) -> None:
         """mambo"""
-        self.maze = maze
         self.mlx = Mlx()
         self.mlx_ptr = self.mlx.mlx_init()
         self.win_ptr = self.mlx.mlx_new_window(
@@ -75,10 +107,12 @@ class MazeRenderer:
                      self.mlx_ptr, self.window_height, self.window_width)
         self.data, self.bpp, self.size_line, self.iformat = (
             self.mlx.mlx_get_data_addr(self.image))
-        self.draw_canvas(maze)
+        self.reset_maze()
+        self.draw_canvas(self.maze)
         self.mlx.mlx_mouse_hook(self.win_ptr, self.mouse_handler, None)
         self.mlx.mlx_key_hook(self.win_ptr, self.key_handler, None)
         self.mlx.mlx_hook(self.win_ptr, 33, 0, self.close_handle, None)
+        self.mlx.mlx_loop_hook(self.mlx_ptr, self.animation_step, None)
         self.mlx.mlx_loop(self.mlx_ptr)
 
     def draw_canvas(self, maze: List[List[int]]) -> None:
@@ -120,142 +154,185 @@ class MazeRenderer:
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 766,
                                 self.color_text, 'Choose one: ')
 
-    def draw_maze(self, maze: List[List[int]]) -> None:
-        """jambo"""
+    def reset_maze(self) -> None:
+        """nambo"""
         # Calculate cell size as the largest size that fits the maze
         self.cell_size = min(
-            (self.maze_area_width - self.wall_thickness * 2) // len(maze[0]),
-            (self.maze_area_height - self.wall_thickness * 2) // len(maze)
+            (self.maze_area_width - self.wall_thickness * 2)
+            // self.maze_width,
+            (self.maze_area_height - self.wall_thickness * 2)
+            // self.maze_height
         )
         self.wall_thickness = max(1, min(self.cell_size // 10, 5))
         # Calculate maze pixel dimensions and centered starting position
         # within the grey area
-        maze_pixel_width: int = len(maze[0]) * self.cell_size
-        maze_pixel_height: int = len(maze) * self.cell_size
-        start_x: int = max(
+        maze_pixel_width: int = self.maze_width * self.cell_size
+        maze_pixel_height: int = self.maze_height * self.cell_size
+        self.start_x = max(
             self.wall_thickness, (self.maze_area_width - maze_pixel_width) // 2
         )
-        start_y: int = max(
+        self.start_y = max(
             self.wall_thickness,
             (self.maze_area_height - maze_pixel_height) // 2
         )
-        # Draw 42 pattern if maze is large enough and store its grid position
         if self.maze_width >= 13 or self.maze_height >= 13:
-            start_x += 3
-            start_y += 3
+            self.start_x += 3
+            self.start_y += 3
+        self.maze = [[15] * self.maze_width for _ in range(self.maze_height)]
+
+    def draw_cell(self, col: int, row: int, value: int) -> None:
+        """lambo"""
+        cell_x: int = self.start_x + (col * self.cell_size)
+        cell_y: int = self.start_y + (row * self.cell_size)
+        for py in range(self.cell_size):
+            for px in range(self.cell_size):
+                if self.size_line is not None and self.data is not None:
+                    offset: int = (
+                        ((cell_y + py) * self.size_line) +
+                        ((cell_x + px) * 4)
+                    )
+                    self.data[offset:offset+4] = (
+                        self.color_maze_area.to_bytes(4, 'little'))
+        self.draw_walls(cell_x, cell_y, value)
+        for py in range(self.wall_thickness, self.cell_size):
+            for px in range(self.wall_thickness, self.cell_size):
+                if self.size_line is not None and self.data is not None:
+                    offset = (
+                        ((cell_y + py) * self.size_line) +
+                        ((cell_x + px) * 4)
+                    )
+                    self.data[offset:offset+4] = (
+                        self.color_cell_bg.to_bytes(4, 'little'))
+        if col > 0 and row > 0:
+            above_left = self.maze[row - 1][col - 1]
+            if bool(above_left & S) and bool(above_left & E):
+                for wy in range(self.wall_thickness):
+                    for wx in range(self.wall_thickness):
+                        if self.size_line is not None \
+                                and self.data is not None:
+                            offset = (
+                                ((cell_y + wy) * self.size_line) +
+                                ((cell_x + wx) * 4)
+                            )
+                            self.data[offset:offset+4] = (
+                                self.color_wall.to_bytes(4, 'little'))
+
+    def animation_step(self, param: Any) -> int:
+        """jambo"""
+        if self.mlx is None:
+            return 0
+        if self.anim_index >= len(self.animation_frames):
+            return 0
+        x, y, value = self.animation_frames[self.anim_index]
+        self.maze[y][x] = value
+        self.draw_cell(x, y, value)
+        self.draw_entry_exit(self.start_x, self.start_y)
+        self.anim_index += 1
+        self.mlx.mlx_put_image_to_window(
+            self.mlx_ptr, self.win_ptr, self.image, 95, 45)
+        return 0
+
+    def draw_walls(self, cell_x: int, cell_y: int, cell: int) -> None:
+        """Draw walls for a single cell based on bitwise cell value."""
+        north: bool = bool(cell & N)
+        south: bool = bool(cell & S)
+        east: bool = bool(cell & E)
+        west: bool = bool(cell & W)
+        if north:
+            for wall_row in range(self.wall_thickness):
+                for x in range(cell_x, cell_x + self.cell_size):
+                    if self.size_line is not None \
+                            and self.data is not None:
+                        offset: int = (
+                                ((cell_y + wall_row)
+                                 * self.size_line) + (x * 4)
+                            )
+                        self.data[offset:offset+4] = (
+                            (self.color_wall).to_bytes(4, 'little'))
+        if south:
+            for wall_row in range(self.wall_thickness):
+                for x in range(
+                        cell_x,
+                        cell_x + self.cell_size + self.wall_thickness):
+                    if self.size_line is not None \
+                            and self.data is not None:
+                        offset = (
+                                (((cell_y + self.cell_size) + wall_row)
+                                 * self.size_line) + (x * 4)
+                            )
+                        self.data[offset:offset+4] = (
+                            (self.color_wall).to_bytes(4, 'little'))
+        if west:
+            for wall_col in range(self.wall_thickness):
+                for y in range(cell_y, cell_y + self.cell_size):
+                    if self.size_line is not None \
+                            and self.data is not None:
+                        offset = (
+                            (y * self.size_line) +
+                            ((cell_x + wall_col) * 4)
+                        )
+                        self.data[offset:offset+4] = (
+                            (self.color_wall).to_bytes(4, 'little'))
+        if east:
+            for wall_col in range(self.wall_thickness):
+                for y in range(
+                        cell_y,
+                        cell_y + self.cell_size + self.wall_thickness):
+                    if self.size_line is not None \
+                            and self.data is not None:
+                        offset = (
+                            (y * self.size_line) +
+                            ((cell_x + self.cell_size + wall_col) * 4)
+                        )
+                        self.data[offset:offset+4] = (
+                            (self.color_wall).to_bytes(4, 'little'))
+        for wy in range(self.wall_thickness):
+            for wx in range(self.wall_thickness):
+                if self.size_line is not None and self.data is not None:
+                    offset = (
+                        ((cell_y + self.cell_size + wy) * self.size_line) +
+                        ((cell_x + self.cell_size + wx) * 4)
+                    )
+                    self.data[offset:offset+4] = (
+                        self.color_wall.to_bytes(4, 'little'))
+
+    def draw_maze(self, maze: List[List[int]]) -> None:
+        """jambo"""
+        for row in range(len(maze)):
+            for col in range(len(maze[row])):
+                cell_x: int = self.start_x + (col * self.cell_size)
+                cell_y: int = self.start_y + (row * self.cell_size)
+                cell: int = maze[row][col]
+                self.draw_walls(cell_x, cell_y, cell)
+        for row in range(len(maze)):
+            for col in range(len(maze[row])):
+                cell_x = self.start_x + (col * self.cell_size)
+                cell_y = self.start_y + (row * self.cell_size)
+                for py in range(self.wall_thickness, self.cell_size):
+                    for px in range(self.wall_thickness, self.cell_size):
+                        if self.size_line is not None \
+                                and self.data is not None:
+                            offset: int = (
+                                ((cell_y + py) * self.size_line) +
+                                ((cell_x + px) * 4)
+                            )
+                            self.data[offset:offset+4] = (
+                                self.color_cell_bg.to_bytes(4, 'little'))
+        # Draw 42 pattern if maze is large enough and store its grid position
         pattern_42: List[List[int]] = [
-            [1, 0, 1, 0, 1, 1, 1],
-            [1, 0, 1, 0, 0, 0, 1],
-            [1, 0, 1, 0, 1, 1, 1],
-            [1, 1, 1, 0, 1, 0, 0],
+            [1, 0, 0, 0, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 0, 1, 1, 1],
             [0, 0, 1, 0, 1, 0, 0],
             [0, 0, 1, 0, 1, 1, 1],
         ]
-        pattern_col: int = -1
-        pattern_row: int = -1
-        if self.maze_width >= 9 or self.maze_height >= 11:
-            pattern_col, pattern_row = self.draw_42_pattern(
-                start_x, start_y, len(maze[0]), len(maze), pattern_42)
-        for row in range(len(maze)):
-            for col in range(len(maze[row])):
-                cell_x: int = start_x + (col * self.cell_size)
-                cell_y: int = start_y + (row * self.cell_size)
-                cell: int = maze[row][col]
-                # Check if current cell is part of the 42 pattern
-                p_row: int = row - pattern_row
-                p_col: int = col - pattern_col
-                is_pattern_cell = (
-                    pattern_col >= 0 and
-                    0 <= p_row < len(pattern_42) and
-                    0 <= p_col < len(pattern_42[0]) and
-                    pattern_42[p_row][p_col] == 1
-                )
-                # Check if each neighbouring cell is part of the 42 pattern
-                north_is_pattern = (
-                    pattern_col >= 0 and
-                    0 <= (row - 1) - pattern_row < len(pattern_42) and
-                    0 <= col - pattern_col < len(pattern_42[0]) and
-                    pattern_42[(row - 1) - pattern_row][col - pattern_col] == 1
-                )
-                south_is_pattern = (
-                    pattern_col >= 0 and
-                    0 <= (row + 1) - pattern_row < len(pattern_42) and
-                    0 <= col - pattern_col < len(pattern_42[0]) and
-                    pattern_42[(row + 1) - pattern_row][col - pattern_col] == 1
-                )
-                east_is_pattern = (
-                    pattern_col >= 0 and
-                    0 <= row - pattern_row < len(pattern_42) and
-                    0 <= (col + 1) - pattern_col < len(pattern_42[0]) and
-                    pattern_42[row - pattern_row][(col + 1) - pattern_col] == 1
-                )
-                west_is_pattern = (
-                    pattern_col >= 0 and
-                    0 <= row - pattern_row < len(pattern_42) and
-                    0 <= (col - 1) - pattern_col < len(pattern_42[0]) and
-                    pattern_42[row - pattern_row][(col - 1) - pattern_col] == 1
-                )
-                # Force walls closed for pattern cells and their neighbours
-                north: bool = True if (is_pattern_cell or north_is_pattern) \
-                    else bool(cell & N)
-                south: bool = True if (is_pattern_cell or south_is_pattern) \
-                    else bool(cell & S)
-                west: bool = True if (is_pattern_cell or west_is_pattern) \
-                    else bool(cell & W)
-                east: bool = True if (is_pattern_cell or east_is_pattern) \
-                    else bool(cell & E)
-                # Draw walls for current cell
-                if north:
-                    for wall_row in range(self.wall_thickness):
-                        for x in range(cell_x, cell_x + self.cell_size):
-                            if self.size_line is not None \
-                                    and self.data is not None:
-                                offset: int = (
-                                        ((cell_y + wall_row)
-                                         * self.size_line) + (x * 4)
-                                    )
-                                self.data[offset:offset+4] = (
-                                    (self.color_wall).to_bytes(4, 'little'))
-                if south:
-                    for wall_row in range(self.wall_thickness):
-                        for x in range(
-                                cell_x,
-                                cell_x + self.cell_size + self.wall_thickness):
-                            if self.size_line is not None \
-                                    and self.data is not None:
-                                offset = (
-                                        (((cell_y + self.cell_size) + wall_row)
-                                         * self.size_line) + (x * 4)
-                                    )
-                                self.data[offset:offset+4] = (
-                                    (self.color_wall).to_bytes(4, 'little'))
-                if west:
-                    for wall_col in range(self.wall_thickness):
-                        for y in range(cell_y, cell_y + self.cell_size):
-                            if self.size_line is not None \
-                                    and self.data is not None:
-                                offset = (
-                                    (y * self.size_line) +
-                                    ((cell_x + wall_col) * 4)
-                                )
-                                self.data[offset:offset+4] = (
-                                    (self.color_wall).to_bytes(4, 'little'))
-                if east:
-                    for wall_col in range(self.wall_thickness):
-                        for y in range(
-                                cell_y,
-                                cell_y + self.cell_size + self.wall_thickness):
-                            if self.size_line is not None \
-                                    and self.data is not None:
-                                offset = (
-                                    (y * self.size_line) +
-                                    ((cell_x + self.cell_size + wall_col) * 4)
-                                )
-                                self.data[offset:offset+4] = (
-                                    (self.color_wall).to_bytes(4, 'little'))
-        self.draw_entry_exit(start_x, start_y)
+        if self.maze_width >= 9 or self.maze_height >= 7:
+            self.draw_42_pattern(
+                self.start_x, self.start_y,
+                self.maze_width, self.maze_height, pattern_42)
+        self.draw_entry_exit(self.start_x, self.start_y)
         if self.show_path:
-            self.draw_path(start_x, start_y)
+            self.draw_path(self.start_x, self.start_y)
 
     def draw_42_pattern(self, start_x: int, start_y: int,
                         len_maze_cols: int, len_maze_rows: int,
@@ -270,8 +347,8 @@ class MazeRenderer:
                 if pattern_42[row][col] == 1:
                     cell_x = pattern_start_x + (col * self.cell_size)
                     cell_y = pattern_start_y + (row * self.cell_size)
-                    for py in range(self.cell_size):
-                        for px in range(self.cell_size):
+                    for py in range(self.wall_thickness, self.cell_size):
+                        for px in range(self.wall_thickness, self.cell_size):
                             pixel_x = cell_x + px
                             pixel_y = cell_y + py
                             if self.size_line is not None \
@@ -302,26 +379,29 @@ class MazeRenderer:
                 "color_wall": 0xFF000000,
                 "color_pattern": 0xFF333333,
                 "color_text": 0xFF333333,
-                "color_path": 0xFFCCCCCC
+                "color_path": 0xFFCCCCCC,
+                "color_cell_bg": 0xFF888888
             },
             {
                 "theme_name": "Negative",
-                "color_window_bg": 0xFFBBBBBB,
-                "color_maze_area": 0xFF999999,
-                "color_wall": 0xFF222222,
-                "color_pattern": 0xFF666666,
-                "color_text": 0xFF222222,
-                "color_path": 0xFF333333
+                "color_window_bg": 0xFF808080,
+                "color_maze_area": 0xFF5A5A5A,
+                "color_wall": 0xFF909090,
+                "color_pattern": 0xFF222222,
+                "color_text": 0xFFCCCCCC,
+                "color_path": 0xFFAAAAAA,
+                "color_cell_bg": 0xFF444444
             },
             {
                 "theme_name": "42",
-                "color_window_bg": 0xFF1A0A00,
-                "color_maze_area": 0xFF2B6CB0,
-                "color_wall": 0xFF5C3317,
-                "color_pattern": 0xFF1A5276,
-                "color_text": 0xFF5C3317,
-                "color_path": 0xFF00FFFF
-            },
+                "color_window_bg": 0xFF0A0A1A,
+                "color_maze_area": 0xFF1A3A5C,
+                "color_wall": 0xFF3D6B8C,
+                "color_pattern": 0xFF333333,
+                "color_text": 0xFF5B9EC9,
+                "color_path": 0xFF00BFFF,
+                "color_cell_bg": 0xFF122840
+            }
         ]
         self.current_theme = (self.current_theme + 1) % len(themes)
         for key, value in themes[self.current_theme].items():
@@ -388,12 +468,18 @@ class MazeRenderer:
             self.mlx.mlx_mouse_hook(self.win_ptr, None, None)
         if keynum in (52, 65430):
             self.mlx.mlx_loop_exit(self.mlx_ptr)
-            print("You pressed to exit - bye!")
+            print("You pressed 4 to exit - bye!")
         elif keynum in (51, 65435):
             self.rotate_themes()
             self.draw_canvas(self.maze)
         elif keynum in (50, 65433):
             self.show_path = not self.show_path
+            self.draw_canvas(self.maze)
+        elif keynum in (49, 65436):
+            print(self.anim_index)
+            self.reset_maze()
+            self.show_path = False
+            self.anim_index = 0
             self.draw_canvas(self.maze)
         else:
             print(f"Got key {keynum}, and got my stuff back:")

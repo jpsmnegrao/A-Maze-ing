@@ -162,4 +162,4 @@ parser: ParserReturn = ParserReturn("config.txt")
 config: Dict[str, Any] = parser.parse_config()
 
 renderer: MazeRenderer = MazeRenderer(config)
-renderer.run_mlx_renderer(mock_maze2)
+renderer.run_mlx_renderer(mock_maze4)

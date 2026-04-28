@@ -81,7 +81,7 @@ class ParserReturn:
                 raise ValueError("Entry and Exit points cannot be the same!")
             width = maze_config["WIDTH"]
             height = maze_config["HEIGHT"]
-            if width < 9 or height < 11:
+            if width < 9 or height < 7:
                 print("Warning: Maze is not big enough for 42 pattern.")
             entry_x, entry_z = maze_config["ENTRY"]
             exit_x, exit_z = maze_config["EXIT"]
