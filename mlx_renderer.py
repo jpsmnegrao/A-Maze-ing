@@ -35,39 +35,18 @@ class MazeRenderer:
         self.start_x: int = 0
         self.start_y: int = 0
         self.anim_index: int = 0
-        self.animation_frames: List[Tuple[int, int, int]] = [
-            (0, 0, 13), (1, 0, 7), (1, 0, 5), (2, 0, 7), (2, 0, 3),
-            (2, 1, 14), (2, 1, 10), (2, 2, 14), (2, 2, 10), (2, 3, 14),
-            (2, 3, 12), (3, 3, 7), (3, 3, 5), (4, 3, 7), (4, 3, 3),
-            (4, 4, 14), (4, 4, 10), (4, 5, 14), (4, 5, 10), (4, 6, 14),
-            (4, 6, 10), (4, 7, 14), (4, 7, 6), (3, 7, 13), (3, 7, 5),
-            (2, 7, 13), (2, 7, 5), (1, 7, 13), (1, 7, 12), (1, 6, 11),
-            (1, 6, 3), (0, 6, 13), (0, 6, 9), (0, 7, 14), (0, 7, 10),
-            (0, 8, 14), (0, 8, 12), (1, 8, 7), (1, 8, 5), (2, 8, 7),
-            (2, 8, 5), (3, 8, 7), (3, 8, 5), (4, 8, 7), (4, 8, 5),
-            (5, 8, 7), (5, 8, 5), (6, 8, 7), (6, 8, 5), (7, 8, 7),
-            (7, 8, 6), (7, 7, 11), (7, 7, 3), (6, 7, 13), (6, 7, 5),
-            (5, 7, 13), (7, 7, 1), (8, 7, 7), (8, 7, 6), (8, 6, 11),
-            (8, 6, 10), (8, 5, 11), (8, 5, 10), (8, 4, 11), (8, 4, 10),
-            (8, 3, 11), (8, 3, 10), (8, 2, 11), (8, 2, 10), (8, 1, 11),
-            (8, 1, 3), (7, 1, 13), (7, 1, 12), (7, 0, 11), (7, 0, 9),
-            (8, 0, 7), (7, 0, 1), (6, 0, 13), (6, 0, 5), (5, 0, 13),
-            (5, 0, 5), (4, 0, 13), (4, 0, 9), (4, 1, 14), (4, 1, 6),
-            (3, 1, 13), (3, 1, 12), (3, 0, 11), (3, 1, 8), (3, 2, 14),
-            (3, 2, 12), (4, 2, 7), (4, 1, 4), (5, 1, 7), (5, 1, 5),
-            (6, 1, 7), (8, 5, 2), (7, 5, 13), (7, 5, 5), (6, 5, 13),
-            (8, 7, 2), (8, 8, 14), (0, 6, 8), (0, 5, 11), (0, 5, 10),
-            (0, 4, 11), (0, 4, 10), (0, 3, 11), (0, 3, 10), (0, 2, 11),
-            (0, 2, 10), (0, 1, 11), (0, 1, 9), (1, 1, 7), (0, 5, 8),
-            (1, 5, 7), (1, 5, 5), (2, 5, 7), (2, 5, 3), (2, 6, 14),
-            (4, 3, 1), (5, 3, 7), (5, 3, 5), (6, 3, 7),
-        ]
+        self.path_anim_index: int = 0
+        self.animation_frames: List[Tuple[int, int, int]] = []
         self.show_path: bool = False
         self.maze: List[List[int]] = []
-        self.path: List[str] = ['E', 'E', 'S', 'S', 'S', 'E', 'E', 'S', 'S',
-                                'S', 'S', 'W', 'W', 'W', 'N', 'W', 'S', 'S',
-                                'E', 'E', 'E', 'E', 'E', 'E', 'E', 'N', 'E',
-                                'S']
+        self.path: List[str] = []
+        self.pattern_42: List[List[int]] = [
+            [1, 0, 0, 0, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 0, 1, 1, 1],
+            [0, 0, 1, 0, 1, 0, 0],
+            [0, 0, 1, 0, 1, 1, 1],
+        ]
         # MLX objects (initialized in run_renderer)
         self.mlx: Optional[Mlx] = None
         self.mlx_ptr: Optional[Any] = None
@@ -152,7 +131,7 @@ class MazeRenderer:
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 744,
                                 self.color_text, '4. Exit')
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 766,
-                                self.color_text, 'Choose one: ')
+                                self.color_text, 'Choose one (1-4)')
 
     def reset_maze(self) -> None:
         """nambo"""
@@ -222,10 +201,18 @@ class MazeRenderer:
         if self.mlx is None:
             return 0
         if self.anim_index >= len(self.animation_frames):
+            if self.show_path and self.path_anim_index < len(self.path):
+                self.draw_path(self.start_x, self.start_y)
+                self.path_anim_index += 1
+                self.mlx.mlx_put_image_to_window(
+                    self.mlx_ptr, self.win_ptr, self.image, 95, 45)
             return 0
         x, y, value = self.animation_frames[self.anim_index]
         self.maze[y][x] = value
         self.draw_cell(x, y, value)
+        self.draw_42_pattern(
+            self.start_x, self.start_y,
+            self.maze_width, self.maze_height, self.pattern_42)
         self.draw_entry_exit(self.start_x, self.start_y)
         self.anim_index += 1
         self.mlx.mlx_put_image_to_window(
@@ -319,17 +306,10 @@ class MazeRenderer:
                             self.data[offset:offset+4] = (
                                 self.color_cell_bg.to_bytes(4, 'little'))
         # Draw 42 pattern if maze is large enough and store its grid position
-        pattern_42: List[List[int]] = [
-            [1, 0, 0, 0, 1, 1, 1],
-            [1, 0, 0, 0, 0, 0, 1],
-            [1, 1, 1, 0, 1, 1, 1],
-            [0, 0, 1, 0, 1, 0, 0],
-            [0, 0, 1, 0, 1, 1, 1],
-        ]
         if self.maze_width >= 9 or self.maze_height >= 7:
             self.draw_42_pattern(
                 self.start_x, self.start_y,
-                self.maze_width, self.maze_height, pattern_42)
+                self.maze_width, self.maze_height, self.pattern_42)
         self.draw_entry_exit(self.start_x, self.start_y)
         if self.show_path:
             self.draw_path(self.start_x, self.start_y)
@@ -378,7 +358,7 @@ class MazeRenderer:
                 "color_maze_area": 0xFF666666,
                 "color_wall": 0xFF000000,
                 "color_pattern": 0xFF333333,
-                "color_text": 0xFF333333,
+                "color_text": 0xFF888888,
                 "color_path": 0xFFCCCCCC,
                 "color_cell_bg": 0xFF888888
             },
@@ -386,7 +366,7 @@ class MazeRenderer:
                 "theme_name": "Negative",
                 "color_window_bg": 0xFF808080,
                 "color_maze_area": 0xFF5A5A5A,
-                "color_wall": 0xFF909090,
+                "color_wall": 0xFF000000,
                 "color_pattern": 0xFF222222,
                 "color_text": 0xFFCCCCCC,
                 "color_path": 0xFFAAAAAA,
@@ -395,12 +375,12 @@ class MazeRenderer:
             {
                 "theme_name": "42",
                 "color_window_bg": 0xFF0A0A1A,
-                "color_maze_area": 0xFF1A3A5C,
-                "color_wall": 0xFF3D6B8C,
+                "color_maze_area": 0xFF27B0F5,
+                "color_wall": 0xFF122840,
                 "color_pattern": 0xFF333333,
-                "color_text": 0xFF5B9EC9,
+                "color_text": 0xFFF5B027,
                 "color_path": 0xFF00BFFF,
-                "color_cell_bg": 0xFF122840
+                "color_cell_bg": 0xFF3D6B8C
             }
         ]
         self.current_theme = (self.current_theme + 1) % len(themes)
@@ -437,15 +417,7 @@ class MazeRenderer:
         entry_x: int = start_x + (self.entry[0] * self.cell_size)
         entry_y: int = start_y + (self.entry[1] * self.cell_size)
         for step, cell in enumerate(self.path):
-            if cell == 'E':
-                entry_x += self.cell_size
-            elif cell == 'S':
-                entry_y += self.cell_size
-            elif cell == 'W':
-                entry_x -= self.cell_size
-            elif cell == 'N':
-                entry_y -= self.cell_size
-            if step < len(self.path) - 1:
+            if 0 < step <= self.path_anim_index:
                 for py in range(self.cell_size):
                     for px in range(self.cell_size):
                         if px < self.wall_thickness \
@@ -458,7 +430,15 @@ class MazeRenderer:
                                 ((entry_x + px) * 4)
                             )
                             self.data[offset: offset+4] = (
-                                (0xFF0099FF).to_bytes(4, 'little'))
+                                (self.color_path).to_bytes(4, 'little'))
+            if cell == 'E':
+                entry_x += self.cell_size
+            elif cell == 'S':
+                entry_y += self.cell_size
+            elif cell == 'W':
+                entry_x -= self.cell_size
+            elif cell == 'N':
+                entry_y -= self.cell_size
 
     def mouse_handler(self, button, x, y, mystuff):
         print(f"Got mouse event! button {button} at {x},{y}.")
@@ -474,9 +454,10 @@ class MazeRenderer:
             self.draw_canvas(self.maze)
         elif keynum in (50, 65433):
             self.show_path = not self.show_path
+            if self.show_path:
+                self.path_anim_index = 0
             self.draw_canvas(self.maze)
         elif keynum in (49, 65436):
-            print(self.anim_index)
             self.reset_maze()
             self.show_path = False
             self.anim_index = 0
