@@ -1,7 +1,10 @@
 """
-Version 2.1
-Module: a-maze-ing
 Main entrypoint for a-maze-ing maze generator and solver.
+
+Uses ParserReturn for config parsing, Maze for generation,
+and MazeRenderer for visual display.
+
+Version 2.1
 """
 
 import sys
@@ -28,6 +31,7 @@ with open(config["OUTPUT_FILE"], "r") as f:
         if not line:
             break
         maze_grid.append([int(ch, 16) for ch in line])
+    # skip entry and exit points
     f.readline()
     f.readline()
     path_line = f.readline().strip()
