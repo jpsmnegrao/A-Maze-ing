@@ -13,11 +13,12 @@
     [x] Need to make it so that the first point the maze generator starts from is from EXIT
     [x] Need to make an auto generator of 42
         [x] make it so that the maze doesnt touch the 42
-    [] Reconfigure prints to be usable outputs/returns for MLX
+    [x] Reconfigure prints to be usable outputs/returns for MLX
         [x] make the save file take in either the filename or None
             [x] if None then print to terminal and return current wall data
             [x] Save to filename and then return data
-        [] Change this to yields instead of returns to get constant map updates
+    [x] Change the Maze class so that it works better for instantiating
+        [x] Set up better self.*variables* so that they can more easily be refered to
 
 [] Bonus Algorithms
     [] Backtracking

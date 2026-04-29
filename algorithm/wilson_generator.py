@@ -28,18 +28,27 @@ class Maze(Maze_Handler):
     def __init__(self, config: dict):
         super().__init__(config)
         self.grid: list = [[0 for _ in range(self.width)]
-                           for _ in range(self.height)]
+                           for _ in range(self.height)]  # creating 2D list
+        # the 0s in the list mean that they are full blocks and not paths yet
+        self.sleep_timer: float = 0.05  # EDITABLE-changes time between outputs
         self.logo_cell: int = -42
-        self.insert_logo()
-        self.N, self.E, self.S, self.W = 1, 2, 4, 8
+        self.insert_logo()  # replaces 0s in grid list with logo markers
+        self.N, self.E, self.S, self.W = 1, 2, 4, 8  # set direction meaning
         self.dir_x: dict = {self.E: 1, self.W: -1, self.N: 0, self.S: 0}
         self.dir_y: dict = {self.E: 0, self.W: 0, self.N: 1, self.S: -1}
         self.inverted: dict = {self.E: self.W, self.W: self.E, self.N: self.S,
                                self.S: self.N}
-        self.marked_cell: int = 16
+        self.marked_cell: int = 16  # used to confirm that cells are for path
         self.out_file: str = config["OUTPUT_FILE"]
-        self.first = True
+        self.first: bool = True  # truthy to let init path be set from exit
+        self.save_path: bool = True  # truthy to save init path only once
+        self.init_path: list = []  # steps that will be taken for solution
+        self.path_str: str = ""
+        self.curr_grid: list = []  # keeps what the grid looks like in hexadec
 
+    # Func to create the 42 logo cells. Gets a middle point of width & height
+    # and then marks certain cells around it as -42 instead of 0 so that
+    # these cells wont be edited or looped over later by walk()
     def insert_logo(self) -> None:
         maze_center: tuple = (int(self.width / 2), int(self.height / 2))
         base_logo: list = [
@@ -75,6 +84,7 @@ class Maze(Maze_Handler):
                 self.grid[row[1]][x_vals] = self.logo_cell
 
     # draw maze func that returns the current state of the maze to print
+    # this print_maze func is mostly useless now (it was used for testing)
     def print_maze(self, cell_x: int | None = None, cell_y: int | None = None,
                    path: list | None = None) -> None:
         sym_block: str = "#"
@@ -119,18 +129,21 @@ class Maze(Maze_Handler):
     # repeatedly walk until one of the conds are met
     # this will draw and sleep between each new cell it has walked
     def walk(self, filename: str | None) -> list:
-        while True:
-            if self.first is True:
+        while True:  # constantly loops until path is found
+            if self.first is True:  # get exit cell for the solution/first path
                 cell_y, cell_x = self.exit[0], self.exit[1]
                 self.first = False
-            else:
+            else:  # gets a random cell within the grid
                 cell_y: int = random.randint(0, self.height - 1)
                 cell_x: int = random.randint(0, self.width - 1)
+            # when random cell has been changed or is logo then resets loop
             if self.grid[cell_y][cell_x] != 0:
                 continue
             if self.grid[cell_y][cell_x] < -10:
                 continue
 
+            # keeps track of where it has been so it can reset to earlier cell
+            # or so it can pass it to the loop that saves it for later
             walked: dict = {(cell_x, cell_y): 0}
             init_x, init_y = cell_x, cell_y
             searching = True
@@ -138,18 +151,16 @@ class Maze(Maze_Handler):
 
             while searching is True:
                 if (cell_x, cell_y) in path:
+                    # resets path to earlier cell if it found its own path
                     backtrack_index: int = path.index((cell_x, cell_y))
                     path = path[0:backtrack_index + 1]
-                else:
+                else:  # add current cell to path tracker
                     path.append((cell_x, cell_y))
 
-                if filename is None:  # switches on/off printing/saving
-                    self.print_maze(cell_x, cell_y, path)
-                else:
-                    self.save_to_file(None)
-                time.sleep(0.01)
+                self.save_to_file(None)  # change this to pass attempting path
+                time.sleep(self.sleep_timer)
 
-                searching = False
+                searching = False  # pauses walking to find next direction
                 for dir in random.sample((self.N, self.S, self.E, self.W), 4):
                     next_x = cell_x + self.dir_x[dir]
                     next_y = cell_y + self.dir_y[dir]
@@ -158,21 +169,30 @@ class Maze(Maze_Handler):
                             walked[(cell_x, cell_y)] = dir
                             if self.grid[next_y][next_x] != 0:
                                 if self.grid[next_y][next_x] < -10:
+                                    # 42 cell would be next, get new direction
                                     searching = True
                                     continue
+                                # entry/maze path found, stop walking to save
                                 break
+                            # still looking for maze -> set next cell and
+                            # start walking again
                             cell_x, cell_y = next_x, next_y
                             searching = True
                             break
 
+            # set up to save the correct path that was found as a return
             path = []
             x, y = init_x, init_y
             while (x, y) in walked:
                 dir = walked[(x, y)]
                 if dir == 0:
                     break
-                path.append((x, y, dir))
+                path.append((x, y, dir))  # maze gen will pickup x, y, dir set
+                if self.save_path is True:  # saves the first path for later
+                    self.init_path.append((x, y))
                 x, y = x + self.dir_x[dir], y + self.dir_y[dir]
+            if self.save_path is True:  # makes sure first path isnt changed
+                self.save_path = False
             return path
 
     # generate maze creates a base 2D list, gets total cells, then calls walk
@@ -183,34 +203,31 @@ class Maze(Maze_Handler):
     def generate_maze(self, filename: str | None) -> list:
         entry_x, entry_y = self.entry[0], self.entry[1]
         self.grid[entry_x][entry_y] = self.marked_cell
-        remaining_cells = (self.width * self.height) - 21
+        remaining_cells = (self.width * self.height) - 21  # cells to change
 
         while remaining_cells > 0:
-            for x, y, dir in self.walk(filename):
+            for x, y, dir in self.walk(filename):  # runs walk to get next path
                 next_x, next_y = x + self.dir_x[dir], y + self.dir_y[dir]
 
-                if self.grid[y][x] > -10:
-                    self.grid[y][x] |= dir
-                    self.grid[y][x] |= self.marked_cell
-                if self.grid[next_y][next_x] > -10:
+                if self.grid[y][x] > -10:  # verify not 42 logo
+                    self.grid[y][x] |= dir  # assigns which wall was used
+                    self.grid[y][x] |= self.marked_cell  # sets cell as a path
+                if self.grid[next_y][next_x] > -10:  # verify not 42 logo
                     self.grid[next_y][next_x] |= self.inverted[dir]
                     self.grid[next_y][next_x] |= self.marked_cell
 
-                if filename is None:  # switches on/off printing/saving
-                    self.print_maze()
-                else:
-                    self.save_to_file(None)
-                time.sleep(0.01)
-                remaining_cells -= 1
+                self.save_to_file(None)
+                time.sleep(self.sleep_timer)
+                remaining_cells -= 1  # loop counting down
 
-        self.print_maze()
-        self.save_to_file(None)
+        # self.print_maze() - used for testing with terminal visuals
+        self.save_to_file(filename)  # saves the final grid result
 
     # save maze function which reproduces the 2D list but replacing cells with
     # bit understanding of values
     def save_to_file(self, filename: str | None) -> list:
         save_list: list = []
-        for y, row in enumerate(self.grid):
+        for y, row in enumerate(self.grid):  # creates hexadecimal list
             row_list: list = []
             for x, block in enumerate(row):
                 cell_total: int = 0
@@ -225,19 +242,38 @@ class Maze(Maze_Handler):
                 row_list.append(hex(cell_total)[2:])
             save_list.append(row_list)
 
-        if filename is None:
-            print(save_list)
+        if filename is None:  # save the current state of the grid as hexadecim
+            self.curr_grid = save_list
         else:
             try:
                 with open(filename, "w") as file:
-                    file.write(save_list)
+                    for row in save_list:  # writes each cell in hexa to file
+                        for cell in row:
+                            file.write(cell)
+                        file.write("\n")
+                    file.write(f"\n{self.entry[0]},{self.entry[1]}")  # ENTRY
+                    file.write(f"\n{self.exit[0]},{self.exit[0]}\n")  # EXIT
+                    curr_cell: tuple = self.init_path[len(self.init_path) - 1]
+                    dir_letter: str = ""
+                    for cell in self.init_path:  # creates path taken in str
+                        if (cell[0] - curr_cell[0]) < 0:
+                            dir_letter = "N"
+                        elif (cell[0] - curr_cell[0]) > 0:
+                            dir_letter = "S"
+                        elif (cell[1] - curr_cell[1]) < 0:
+                            dir_letter = "W"
+                        elif (cell[1] - curr_cell[1]) > 0:
+                            dir_letter = "E"
+                        curr_cell = cell
+                        self.path_str = f"{self.path_str}{dir_letter}"
+                        file.write(dir_letter)  # writes solution path to file
             except FileNotFoundError:
                 print("File not found to save to!")
         return save_list
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pulls config and then initializes maze
     parser: dict = ParserReturn("config.txt")
     config: dict = parser.parse_config()
     wilson_maze = Maze(config)
-    wilson_maze.generate_maze(None)
+    wilson_maze.generate_maze(config["OUTPUT_FILE"])
