@@ -239,7 +239,7 @@ class Maze(Maze_Handler):
                     cell_total |= 4
                 if block & self.W != 0:
                     cell_total |= 8
-                row_list.append(hex(cell_total)[2:])
+                row_list.append(hex(cell_total)[2:].capitalize())
             save_list.append(row_list)
 
         if filename is None:  # save the current state of the grid as hexadecim
