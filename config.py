@@ -65,7 +65,8 @@ class ParserReturn:
                     elif key == "PERFECT":
                         maze_config["PERFECT"] = self.parse_bool(key, value)
                     elif key == "SEED":
-                        maze_config["SEED"] = self.parse_int(key, value)
+                        if value:
+                            maze_config["SEED"] = self.parse_int(key, value)
                     else:
                         raise ValueError(f"Unknown key found: {key}")
             required_fields: List[str] = ["WIDTH", "HEIGHT", "ENTRY", "EXIT",

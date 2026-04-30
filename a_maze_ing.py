@@ -35,7 +35,8 @@ with open(config["OUTPUT_FILE"], "r") as f:
     f.readline()
     f.readline()
     path_line = f.readline().strip()
-renderer: MazeRenderer = MazeRenderer(config)
+renderer: MazeRenderer = MazeRenderer(config, maze_gen)
+renderer.maze_gen = maze_gen
 renderer.path = list(path_line)
 renderer.animation_frames = [
     (col, row, maze_grid[row][col])

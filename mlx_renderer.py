@@ -9,6 +9,7 @@ window.
 
 from typing import Dict, List, Tuple, Optional, Any
 from mlx import Mlx  # type: ignore
+from algorithm.wilson_generator import Maze
 
 
 # Direction bit values per project spec (N=1, E=2, S=4, W=8)
@@ -23,7 +24,7 @@ class MazeRenderer:
     path, rotating themes and clsoing the window.
     """
 
-    def __init__(self, config: Dict[str, Any]) -> None:
+    def __init__(self, config: Dict[str, Any], maze_gen: Maze) -> None:
         """Initialize renderer state from the parsed config dict.
 
         Stores maze dimensions, entry/exit, and output file path; sets up
@@ -33,6 +34,7 @@ class MazeRenderer:
         """
         # Config and maze parameters from parser
         self.config = config
+        self.maze_gen = maze_gen
         self.maze_width: int = config["WIDTH"]
         self.maze_height: int = config["HEIGHT"]
         self.entry: Tuple[int, int] = config["ENTRY"]
@@ -203,6 +205,36 @@ class MazeRenderer:
             self.start_y += 3
         # Reset grid: every cell with all four walls closed (0xF)
         self.maze = [[15] * self.maze_width for _ in range(self.maze_height)]
+
+    def regenerate(self) -> None:
+        """Run the generator and reload the maze grid and path."""
+        # Fresh Maze instance — generator state isn't reusable
+        self.maze_gen = Maze(self.config)
+        self.maze_gen.sleep_timer = 0
+        self.maze_gen.generate_maze(self.output_file)
+        # Read the new grid from the output file
+        new_grid: List[List[int]] = []
+        with open(self.output_file, "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    break
+                new_grid.append([int(ch, 16) for ch in line])
+            f.readline()
+            f.readline()
+            path_line = f.readline().strip()
+        # Reload renderer state with the new path and animation frames
+        self.path = list(path_line)
+        self.animation_frames = [
+            (col, row, new_grid[row][col])
+            for row in range(len(new_grid))
+            for col in range(len(new_grid[row]))
+        ]
+        # Reset animation counters and grid for redraw
+        self.anim_index = 0
+        self.path_anim_index = 0
+        self.show_path = False
+        self.reset_maze()
 
     def draw_cell(self, col: int, row: int, value: int) -> None:
         """Draw a single maze cell at (col, row) with its walls.
@@ -546,6 +578,7 @@ class MazeRenderer:
     def key_handler(self, keynum: int, mystuff: Any) -> None:
         """Handle keypresses for the maze controls (1-4)."""
         if keynum in (49, 65436):
+            self.regenerate()
             self.reset_maze()
             self.show_path = False
             self.anim_index = 0
