@@ -1,7 +1,9 @@
-"""
-Version 2.1
-Module: mlx_renderer
-mambo.
+"""Visual maze renderer using the MiniLibX (MLX) library.
+
+Reads a maze grid and solution path produced by the generator and displays
+them in a window. Supports user interactions for regenerating the maze,
+toggling the solution path, rotating between color themes and closing the
+window.
 """
 
 
@@ -9,35 +11,50 @@ from typing import Dict, List, Tuple, Optional, Any
 from mlx import Mlx  # type: ignore
 
 
-# TODO: replace with import when generator module is ready
-# from mazegen import N, S, E, W
+# Direction bit values per project spec (N=1, E=2, S=4, W=8)
 N, E, S, W = 1, 2, 4, 8
 
 
 class MazeRenderer:
-    """mambo"""
+    """Visual maze renderer using the MiniLibX (MLX) library.
+
+    Loads a maze grid and solution path from the generator output, draws them
+    in an MLX window, and handles user input for regenerating, toggling the
+    path, rotating themes and clsoing the window.
+    """
 
     def __init__(self, config: Dict[str, Any]) -> None:
-        """jambo"""
+        """Initialize renderer state from the parsed config dict.
+
+        Stores maze dimensions, entry/exit, and output file path; sets up
+        default rendering values, animation counters, and theme colors. MLX
+        objects are not created here — they are initialized in
+        run_mlx_renderer when the window is opened.
+        """
+        # Config and maze parameters from parser
         self.config = config
-        self.window_width: int = 800
-        self.window_height: int = 800
         self.maze_width: int = config["WIDTH"]
         self.maze_height: int = config["HEIGHT"]
         self.entry: Tuple[int, int] = config["ENTRY"]
         self.exit: Tuple[int, int] = config["EXIT"]
         self.output_file: str = config["OUTPUT_FILE"]
         self.perfect: bool = config["PERFECT"]
+        # Window and maze drawing area dimensions in pixels
+        self.window_width: int = 800
+        self.window_height: int = 800
         self.maze_area_width: int = 610
         self.maze_area_height: int = 610
+        # Cell sizing and starting offset (computed in reset_maze)
         self.cell_size: int = 0
         self.wall_thickness: int = max(1, self.cell_size // 10)
         self.start_x: int = 0
         self.start_y: int = 0
+        # Animation counters and state
         self.anim_index: int = 0
         self.path_anim_index: int = 0
         self.animation_frames: List[Tuple[int, int, int]] = []
         self.show_path: bool = False
+        # Maze grid and solution path loaded from output file
         self.maze: List[List[int]] = []
         self.path: List[str] = []
         self.pattern_42: List[List[int]] = [
@@ -47,7 +64,7 @@ class MazeRenderer:
             [0, 0, 1, 0, 1, 0, 0],
             [0, 0, 1, 0, 1, 1, 1],
         ]
-        # MLX objects (initialized in run_renderer)
+        # MLX objects (initialized in run_mlx_renderer)
         self.mlx: Optional[Mlx] = None
         self.mlx_ptr: Optional[Any] = None
         self.win_ptr: Optional[Any] = None
@@ -71,33 +88,49 @@ class MazeRenderer:
         self.color_cell_bg: int = 0xFF888888
 
     def run_mlx_renderer(self, maze: List[List[int]]) -> None:
-        """mambo"""
+        """Initialize MLX, build the window, and start the event loop.
+
+        Sets up the MLX context, creates the window and the two image buffers
+        (background and maze), wires up input/close/animation hooks, then
+        enters mlx_loop which blocks until the window closes.
+        """
+        # Initialize MLX and create the main window
         self.mlx = Mlx()
         self.mlx_ptr = self.mlx.mlx_init()
         self.win_ptr = self.mlx.mlx_new_window(
                        self.mlx_ptr, self.window_height, self.window_width,
                        "A-Maze-ing"
                 )
+        # Background image buffer (window backdrop)
         self.bg_image = self.mlx.mlx_new_image(
             self.mlx_ptr, self.window_height, self.window_width)
         self.bg_data, _, self.bg_size_line, _ = (
             self.mlx.mlx_get_data_addr(self.bg_image))
+        # Maze image buffer (cells, walls, path, entry/exit)
         self.image = self.mlx.mlx_new_image(
                      self.mlx_ptr, self.window_height, self.window_width)
         self.data, self.bpp, self.size_line, self.iformat = (
             self.mlx.mlx_get_data_addr(self.image))
+        # Compute cell sizing/offsets and draw the initial frame
         self.reset_maze()
         self.draw_canvas(self.maze)
-        self.mlx.mlx_mouse_hook(self.win_ptr, self.mouse_handler, None)
+        # Register input handlers and the per-frame animation callback
         self.mlx.mlx_key_hook(self.win_ptr, self.key_handler, None)
         self.mlx.mlx_hook(self.win_ptr, 33, 0, self.close_handle, None)
         self.mlx.mlx_loop_hook(self.mlx_ptr, self.animation_step, None)
+        # Hand control to MLX (blocks until the window is closed)
         self.mlx.mlx_loop(self.mlx_ptr)
 
     def draw_canvas(self, maze: List[List[int]]) -> None:
-        """jambo"""
+        """Redraw the entire window: background, maze area, maze, and UI text.
+
+        Fills the background image, fills the maze drawing area with the theme
+        color, draws the maze on top, then pushes both images to the window and
+        overlays the title and menu strings.
+        """
         if self.mlx is None:
             return
+        # Fill the background image with the window background color
         if self.bg_size_line is not None \
                 and self.bg_data is not None:
             for y in range(self.window_height):
@@ -105,6 +138,7 @@ class MazeRenderer:
                     offset: int = (y * self.bg_size_line) + (x * 4)
                     self.bg_data[offset:offset+4] = (
                         self.color_window_bg.to_bytes(4, 'little'))
+        # Fill the maze area image with the maze area color
         if self.size_line is not None \
                 and self.data is not None:
             for y in range(self.maze_area_height + 10):
@@ -113,11 +147,14 @@ class MazeRenderer:
                     self.data[offset:offset+4] = (
                         (self.color_maze_area).to_bytes(4, 'little')
                     )
+        # Render the maze cells, walls, 42 pattern, entry/exit, and path
         self.draw_maze(maze)
+        # Push background and maze images to the window
         self.mlx.mlx_put_image_to_window(self.mlx_ptr, self.win_ptr,
                                          self.bg_image, 0, 0)
         self.mlx.mlx_put_image_to_window(self.mlx_ptr, self.win_ptr,
                                          self.image, 95, 45)
+        # Draw the title and menu strings on top
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 309, 15,
                                 self.color_text, "=== A-Maze-ing ===")
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 678,
@@ -134,17 +171,23 @@ class MazeRenderer:
                                 self.color_text, 'Choose one (1-4)')
 
     def reset_maze(self) -> None:
-        """nambo"""
-        # Calculate cell size as the largest size that fits the maze
+        """Compute cell sizing/offsets and reset the maze grid to all-walls.
+
+        Picks the largest cell size that fits the configured maze dimensions
+        inside the maze area, scales wall thickness to match, centers the maze
+        within the area, and initializes self.maze with every cell at 0xF (all
+        four walls closed).
+        """
+        # Largest cell size that fits the maze inside the drawing area
         self.cell_size = min(
             (self.maze_area_width - self.wall_thickness * 2)
             // self.maze_width,
             (self.maze_area_height - self.wall_thickness * 2)
             // self.maze_height
         )
+        # Scale wall thickness with cell size, clamped to 1-5 pixels
         self.wall_thickness = max(1, min(self.cell_size // 10, 5))
-        # Calculate maze pixel dimensions and centered starting position
-        # within the grey area
+        # Center the maze within the drawing area
         maze_pixel_width: int = self.maze_width * self.cell_size
         maze_pixel_height: int = self.maze_height * self.cell_size
         self.start_x = max(
@@ -154,15 +197,25 @@ class MazeRenderer:
             self.wall_thickness,
             (self.maze_area_height - maze_pixel_height) // 2
         )
+        # Nudge offset for larger mazes to compensate for centering drift
         if self.maze_width >= 13 or self.maze_height >= 13:
             self.start_x += 3
             self.start_y += 3
+        # Reset grid: every cell with all four walls closed (0xF)
         self.maze = [[15] * self.maze_width for _ in range(self.maze_height)]
 
     def draw_cell(self, col: int, row: int, value: int) -> None:
-        """lambo"""
+        """Draw a single maze cell at (col, row) with its walls.
+
+        Clears the cell area to the maze area color, draws the cell's walls
+        based on the bitwise wall value, fills the inner area with the cell
+        background color, and patches the top-left corner if the cell
+        above-left has matching south and east walls.
+        """
+        # Pixel coordinates of the cell's top-left corner
         cell_x: int = self.start_x + (col * self.cell_size)
         cell_y: int = self.start_y + (row * self.cell_size)
+        # Clear the cell area with the maze area background color
         for py in range(self.cell_size):
             for px in range(self.cell_size):
                 if self.size_line is not None and self.data is not None:
@@ -172,7 +225,9 @@ class MazeRenderer:
                     )
                     self.data[offset:offset+4] = (
                         self.color_maze_area.to_bytes(4, 'little'))
+        # Draw the four walls based on the bitwise value (N/E/S/W bits)
         self.draw_walls(cell_x, cell_y, value)
+        # Fill the inner cell area (inside the walls) with the cell color
         for py in range(self.wall_thickness, self.cell_size):
             for px in range(self.wall_thickness, self.cell_size):
                 if self.size_line is not None and self.data is not None:
@@ -182,6 +237,8 @@ class MazeRenderer:
                     )
                     self.data[offset:offset+4] = (
                         self.color_cell_bg.to_bytes(4, 'little'))
+        # Patch the top-left corner pixel block when the diagonal neighbour
+        # has both south and east walls (closes the wall intersection)
         if col > 0 and row > 0:
             above_left = self.maze[row - 1][col - 1]
             if bool(above_left & S) and bool(above_left & E):
@@ -197,9 +254,16 @@ class MazeRenderer:
                                 self.color_wall.to_bytes(4, 'little'))
 
     def animation_step(self, param: Any) -> int:
-        """jambo"""
+        """Render one animation step per MLX loop tick.
+
+        Draws the next maze cell from animation_frames if any remain. Once the
+        maze is fully drawn and the path toggle is on, advances the path
+        animation one cell at a time. Pushes the updated maze image to the
+        window after each step.
+        """
         if self.mlx is None:
             return 0
+        # Maze fully drawn: advance the path animation if toggled on
         if self.anim_index >= len(self.animation_frames):
             if self.show_path and self.path_anim_index < len(self.path):
                 self.draw_path(self.start_x, self.start_y)
@@ -207,24 +271,35 @@ class MazeRenderer:
                 self.mlx.mlx_put_image_to_window(
                     self.mlx_ptr, self.win_ptr, self.image, 95, 45)
             return 0
+        # Draw the next maze cell from the animation queue
         x, y, value = self.animation_frames[self.anim_index]
         self.maze[y][x] = value
         self.draw_cell(x, y, value)
+        # Redraw 42 pattern and entry/exit on top so they stay visible
         self.draw_42_pattern(
             self.start_x, self.start_y,
             self.maze_width, self.maze_height, self.pattern_42)
         self.draw_entry_exit(self.start_x, self.start_y)
+        # Advance animation step and push the updated frame to the window
         self.anim_index += 1
         self.mlx.mlx_put_image_to_window(
             self.mlx_ptr, self.win_ptr, self.image, 95, 45)
         return 0
 
     def draw_walls(self, cell_x: int, cell_y: int, cell: int) -> None:
-        """Draw walls for a single cell based on bitwise cell value."""
+        """Draw the four walls of a single cell from its bitwise value.
+
+        Reads the N/E/S/W bits from cell and paints each closed wall as a
+        wall_thickness-wide strip along the matching edge. South and east
+        strips extend by wall_thickness so neighbouring cells share clean
+        corners. A final block patches the bottom-right corner pixel.
+        """
+        # Decode which walls are closed
         north: bool = bool(cell & N)
         south: bool = bool(cell & S)
         east: bool = bool(cell & E)
         west: bool = bool(cell & W)
+        # Paint a wall_thickness-wide strip along each closed wall's edge
         if north:
             for wall_row in range(self.wall_thickness):
                 for x in range(cell_x, cell_x + self.cell_size):
@@ -273,6 +348,7 @@ class MazeRenderer:
                         )
                         self.data[offset:offset+4] = (
                             (self.color_wall).to_bytes(4, 'little'))
+        # Patch the bottom-right corner so wall intersections are filled
         for wy in range(self.wall_thickness):
             for wx in range(self.wall_thickness):
                 if self.size_line is not None and self.data is not None:
@@ -284,13 +360,20 @@ class MazeRenderer:
                         self.color_wall.to_bytes(4, 'little'))
 
     def draw_maze(self, maze: List[List[int]]) -> None:
-        """jambo"""
+        """Draw the full maze: walls, interiors, 42 pattern, entry/exit, path.
+
+        Walls are drawn first across the whole grid, then cell interiors are
+        filled on top to clean up any overlap. The 42 pattern, entry and exit
+        cells, and (if toggled) the solution path are drawn last.
+        """
+        # First pass: draw walls for every cell
         for row in range(len(maze)):
             for col in range(len(maze[row])):
                 cell_x: int = self.start_x + (col * self.cell_size)
                 cell_y: int = self.start_y + (row * self.cell_size)
                 cell: int = maze[row][col]
                 self.draw_walls(cell_x, cell_y, cell)
+        # Second pass: fill cell interiors with the cell background color
         for row in range(len(maze)):
             for col in range(len(maze[row])):
                 cell_x = self.start_x + (col * self.cell_size)
@@ -310,6 +393,7 @@ class MazeRenderer:
             self.draw_42_pattern(
                 self.start_x, self.start_y,
                 self.maze_width, self.maze_height, self.pattern_42)
+        # Draw entry and exit, and the solution path if toggled on
         self.draw_entry_exit(self.start_x, self.start_y)
         if self.show_path:
             self.draw_path(self.start_x, self.start_y)
@@ -317,11 +401,19 @@ class MazeRenderer:
     def draw_42_pattern(self, start_x: int, start_y: int,
                         len_maze_cols: int, len_maze_rows: int,
                         pattern_42: List[List[int]]) -> Tuple[int, int]:
-        """Draw the '42' pattern using fully closed cells."""
+        """Draw the '42' pattern using fully closed cells.
+
+        Centers the pattern on the maze grid, then fills the interior of each
+        pattern cell (skipping wall pixels) with the pattern color. Pixels
+        outside the maze area are skipped. Returns the pattern's top-left
+        position in grid coordinates.
+        """
+        # Center the pattern within the maze grid
         pattern_col = (len_maze_cols - len(pattern_42[0])) // 2
         pattern_row = (len_maze_rows - len(pattern_42)) // 2
         pattern_start_x = start_x + (pattern_col * self.cell_size)
         pattern_start_y = start_y + (pattern_row * self.cell_size)
+        # Fill the interior of each pattern cell marked with 1
         for row in range(len(pattern_42)):
             for col in range(len(pattern_42[row])):
                 if pattern_42[row][col] == 1:
@@ -350,7 +442,7 @@ class MazeRenderer:
         return pattern_col, pattern_row
 
     def rotate_themes(self) -> None:
-        """jambo"""
+        """Cycle to the next color theme and update theme attributes."""
         themes: List[Dict[str, Any]] = [
             {
                 "theme_name": "Dark",
@@ -383,17 +475,19 @@ class MazeRenderer:
                 "color_cell_bg": 0xFF3D6B8C
             }
         ]
+        # Advance to the next theme and apply its values to self
         self.current_theme = (self.current_theme + 1) % len(themes)
         for key, value in themes[self.current_theme].items():
-            if key != "name":
-                setattr(self, key, value)
+            setattr(self, key, value)
 
     def draw_entry_exit(self, start_x: int, start_y: int) -> None:
-        """jambo"""
+        """Fill the entry cell with green and the exit cell with red."""
+        # Pixel coordinates of the entry and exit cells
         entry_x: int = start_x + (self.entry[0] * self.cell_size)
         entry_y: int = start_y + (self.entry[1] * self.cell_size)
         exit_x: int = start_x + (self.exit[0] * self.cell_size)
         exit_y: int = start_y + (self.exit[1] * self.cell_size)
+        # Fill cell interiors (skip wall pixels) with entry/exit colors
         for py in range(self.cell_size):
             for px in range(self.cell_size):
                 if px < self.wall_thickness or py < self.wall_thickness:
@@ -413,9 +507,17 @@ class MazeRenderer:
                         (0xFFCC0000).to_bytes(4, 'little'))
 
     def draw_path(self, start_x: int, start_y: int) -> None:
-        """hambo"""
+        """Draw the solution path one cell at a time, animated.
+
+        Starts at the entry, walks through self.path letter by letter, and
+        fills each visited cell's interior with the path color up to
+        path_anim_index. The entry cell itself is skipped (step 0) so its
+        green color stays visible.
+        """
+        # Start at the entry cell's pixel position
         entry_x: int = start_x + (self.entry[0] * self.cell_size)
         entry_y: int = start_y + (self.entry[1] * self.cell_size)
+        # Walk the path, painting each cell up to the current animation index
         for step, cell in enumerate(self.path):
             if 0 < step <= self.path_anim_index:
                 for py in range(self.cell_size):
@@ -431,6 +533,7 @@ class MazeRenderer:
                             )
                             self.data[offset: offset+4] = (
                                 (self.color_path).to_bytes(4, 'little'))
+            # Advance the cursor to the next cell based on the direction letter
             if cell == 'E':
                 entry_x += self.cell_size
             elif cell == 'S':
@@ -440,30 +543,30 @@ class MazeRenderer:
             elif cell == 'N':
                 entry_y -= self.cell_size
 
-    def mouse_handler(self, button, x, y, mystuff):
-        print(f"Got mouse event! button {button} at {x},{y}.")
-
-    def key_handler(self, keynum, mystuff):
-        if keynum == 32:
-            self.mlx.mlx_mouse_hook(self.win_ptr, None, None)
-        if keynum in (52, 65430):
-            self.mlx.mlx_loop_exit(self.mlx_ptr)
-            print("You pressed 4 to exit - bye!")
-        elif keynum in (51, 65435):
-            self.rotate_themes()
+    def key_handler(self, keynum: int, mystuff: Any) -> None:
+        """Handle keypresses for the maze controls (1-4)."""
+        if keynum in (49, 65436):
+            self.reset_maze()
+            self.show_path = False
+            self.anim_index = 0
             self.draw_canvas(self.maze)
         elif keynum in (50, 65433):
             self.show_path = not self.show_path
             if self.show_path:
                 self.path_anim_index = 0
             self.draw_canvas(self.maze)
-        elif keynum in (49, 65436):
-            self.reset_maze()
-            self.show_path = False
-            self.anim_index = 0
+        elif keynum in (51, 65435):
+            self.rotate_themes()
             self.draw_canvas(self.maze)
+        elif keynum in (52, 65430):
+            if self.mlx is not None:
+                self.mlx.mlx_loop_exit(self.mlx_ptr)
+            print("You pressed 4 to exit - bye!")
+        # Unmapped keys
         else:
-            print(f"Got key {keynum}, and got my stuff back:")
+            print(f"You pressed {keynum}, it's an unassigned key!")
 
-    def close_handle(self, dummy):
-        self.mlx.mlx_loop_exit(self.mlx_ptr)
+    def close_handle(self, dummy: Any) -> None:
+        """Handle the window close button by exiting the MLX loop."""
+        if self.mlx is not None:
+            self.mlx.mlx_loop_exit(self.mlx_ptr)

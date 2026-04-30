@@ -1,8 +1,7 @@
-"""
-Main entrypoint for a-maze-ing maze generator and solver.
+"""Main entrypoint for a-maze-ing maze generator and solver.
 
-Uses ParserReturn for config parsing, Maze for generation,
-and MazeRenderer for visual display.
+Uses ParserReturn for config parsing, Maze for generation, and MazeRenderer
+for visual display.
 
 Version 2.1
 """
@@ -21,6 +20,7 @@ parser: ParserReturn = ParserReturn(sys.argv[1])
 config: Dict[str, Any] = parser.parse_config()
 maze_gen: Maze = Maze(config)
 
+# Disable per-step animation delay during generation
 maze_gen.sleep_timer = 0
 
 maze_gen.generate_maze(config["OUTPUT_FILE"])

@@ -1,7 +1,8 @@
-"""
-Version 2.1
-Module: config
-Configuration parser for maze generation parameters.
+"""Configuration parser for maze generation parameters.
+
+Reads a KEY=VALUE config file, validates required fields (WIDTH, HEIGHT, ENTRY,
+EXIT, OUTPUT_FILE, PERFECT) and optional ones (SEED), and returns a dict ready
+for the generator and renderer.
 """
 
 
@@ -9,16 +10,14 @@ from typing import Dict, Any, List
 
 
 class ParserReturn:
-    """
-    Parser for maze configuration files.
+    """Parser for maze configuration files.
 
     Reads and validates configuration parameters from a text file for maze
     generation.
     """
 
     def __init__(self, filename: str) -> None:
-        """
-        Initialize the configuration parser.
+        """Initialize the configuration parser.
 
         Args:
             filename: Path to the configuration file
@@ -26,8 +25,7 @@ class ParserReturn:
         self.filename = filename
 
     def parse_config(self) -> Dict[str, Any]:
-        """
-        Parse and validate the complete maze configuration file.
+        """Parse and validate the complete maze configuration file.
 
         Reads the configuration file, parses all key-value pairs, validates
         required fields, and performs logical validation on the complete
@@ -97,8 +95,7 @@ class ParserReturn:
 
     @staticmethod
     def parse_int(key: str, value: str) -> int:
-        """
-        Parse and validate an integer configuration value.
+        """Parse and validate an integer configuration value.
 
         Args:
             key: The configuration key name (e.g., 'WIDTH', 'HEIGHT', 'SEED')
@@ -108,8 +105,8 @@ class ParserReturn:
             The parsed integer value
 
         Raises:
-            ValueError: If value is not an integer or (for non-SEED keys)
-                        not in range 4-1024
+            ValueError: If value is not an integer or (for non-SEED keys) not
+                        in range 4-1024
         """
         try:
             result: int = int(value)
@@ -125,8 +122,7 @@ class ParserReturn:
 
     @staticmethod
     def parse_coords(key: str, value: str) -> tuple[int, int]:
-        """
-        Parse and validate coordinate configuration value.
+        """Parse and validate coordinate configuration value.
 
         Args:
             key: The configuration key name (e.g., 'ENTRY', 'EXIT')
@@ -151,8 +147,7 @@ class ParserReturn:
 
     @staticmethod
     def parse_str(key: str, value: str) -> str:
-        """
-        Parse and validate a string configuration value.
+        """Parse and validate a string configuration value.
 
         Args:
             key: The configuration key name
@@ -172,8 +167,7 @@ class ParserReturn:
 
     @staticmethod
     def parse_bool(key: str, value: str) -> bool:
-        """
-        Parse and validate a boolean configuration value.
+        """Parse and validate a boolean configuration value.
 
         Args:
             key: The configuration key name (e.g., 'PERFECT')
