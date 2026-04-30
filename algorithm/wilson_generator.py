@@ -33,7 +33,7 @@ class Maze(Maze_Handler):
         self.sleep_timer: float = 0.05  # EDITABLE-changes time between outputs
         self.logo_cell: int = -42
         self.insert_logo()  # replaces 0s in grid list with logo markers
-        self.N, self.E, self.S, self.W = 1, 2, 4, 8  # set direction meaning
+        self.N, self.E, self.S, self.W = 4, 8, 1, 2  # set direction meaning
         self.dir_x: dict = {self.E: 1, self.W: -1, self.N: 0, self.S: 0}
         self.dir_y: dict = {self.E: 0, self.W: 0, self.N: 1, self.S: -1}
         self.inverted: dict = {self.E: self.W, self.W: self.E, self.N: self.S,
@@ -53,12 +53,12 @@ class Maze(Maze_Handler):
         maze_center: tuple = (int(self.width / 2), int(self.height / 2))
         base_logo: list = [
             [
-                [maze_center[0] - 3, maze_center[0] - 1,
+                [maze_center[0] - 3,
                  maze_center[0] + 1, maze_center[0] + 2, maze_center[0] + 3],
                 maze_center[1] - 2
                 ],
             [
-                [maze_center[0] - 3, maze_center[0] - 1,
+                [maze_center[0] - 3,
                  maze_center[0] + 3],
                 maze_center[1] - 1
                 ],
@@ -231,15 +231,26 @@ class Maze(Maze_Handler):
             row_list: list = []
             for x, block in enumerate(row):
                 cell_total: int = 0
-                if block & self.N != 0:
+                if y == 0:
                     cell_total |= 1
-                if block & self.E != 0:
-                    cell_total |= 2
-                if block & self.S != 0:
+                elif block & self.N != 0:
                     cell_total |= 4
-                if block & self.W != 0:
+                if x == 0:
                     cell_total |= 8
-                row_list.append(hex(cell_total)[2:].capitalize())
+                elif block & self.E != 0:
+                    cell_total |= 8
+                if y == len(self.grid):
+                    cell_total |= 1
+                elif block & self.S != 0:
+                    cell_total |= 1
+                if x == len(self.grid[y]):
+                    cell_total |= 2
+                elif block & self.W != 0:
+                    cell_total |= 2
+                if block == -42:
+                    row_list.append("F")
+                else:
+                    row_list.append(hex(cell_total)[2:].capitalize())
             save_list.append(row_list)
 
         if filename is None:  # save the current state of the grid as hexadecim
@@ -252,21 +263,24 @@ class Maze(Maze_Handler):
                             file.write(cell)
                         file.write("\n")
                     file.write(f"\n{self.entry[0]},{self.entry[1]}")  # ENTRY
-                    file.write(f"\n{self.exit[0]},{self.exit[0]}\n")  # EXIT
-                    curr_cell: tuple = self.init_path[len(self.init_path) - 1]
+                    file.write(f"\n{self.exit[0]},{self.exit[1]}\n")  # EXIT
+                    self.init_path.append((self.exit[0],self.exit[1]))
+                    curr_cell: tuple = self.init_path[0]
                     dir_letter: str = ""
-                    for cell in self.init_path:  # creates path taken in str
-                        if (cell[0] - curr_cell[0]) < 0:
-                            dir_letter = "N"
-                        elif (cell[0] - curr_cell[0]) > 0:
-                            dir_letter = "S"
-                        elif (cell[1] - curr_cell[1]) < 0:
-                            dir_letter = "W"
-                        elif (cell[1] - curr_cell[1]) > 0:
+                    i: int = 1
+                    while i < len(self.init_path):  # creates path taken in str
+                        if (self.init_path[i][0] - curr_cell[0]) < 0:
                             dir_letter = "E"
-                        curr_cell = cell
+                        elif (self.init_path[i][0] - curr_cell[0]) > 0:
+                            dir_letter = "W"
+                        elif (self.init_path[i][1] - curr_cell[1]) < 0:
+                            dir_letter = "S"
+                        elif (self.init_path[i][1] - curr_cell[1]) > 0:
+                            dir_letter = "N"
+                        curr_cell = self.init_path[i]
                         self.path_str = f"{self.path_str}{dir_letter}"
                         file.write(dir_letter)  # writes solution path to file
+                        i += 1
             except FileNotFoundError:
                 print("File not found to save to!")
         return save_list
