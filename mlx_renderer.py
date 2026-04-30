@@ -271,19 +271,23 @@ class MazeRenderer:
                         self.color_cell_bg.to_bytes(4, 'little'))
         # Patch the top-left corner pixel block when the diagonal neighbour
         # has both south and east walls (closes the wall intersection)
-        if col > 0 and row > 0:
-            above_left = self.maze[row - 1][col - 1]
-            if bool(above_left & S) and bool(above_left & E):
-                for wy in range(self.wall_thickness):
-                    for wx in range(self.wall_thickness):
-                        if self.size_line is not None \
-                                and self.data is not None:
-                            offset = (
-                                ((cell_y + wy) * self.size_line) +
-                                ((cell_x + wx) * 4)
-                            )
-                            self.data[offset:offset+4] = (
-                                self.color_wall.to_bytes(4, 'little'))
+        if (col > 0 and row > 0
+                and (bool(self.maze[row - 1][col - 1] & S)
+                     or bool(self.maze[row - 1][col - 1] & E))) \
+                or (col > 0 and bool(self.maze[row][col - 1] & N)) \
+                or (row > 0 and bool(self.maze[row - 1][col] & W)) \
+                or bool(value & N) \
+                or bool(value & W):
+            for wy in range(self.wall_thickness):
+                for wx in range(self.wall_thickness):
+                    if self.size_line is not None \
+                            and self.data is not None:
+                        offset = (
+                            ((cell_y + wy) * self.size_line) +
+                            ((cell_x + wx) * 4)
+                        )
+                        self.data[offset:offset+4] = (
+                            self.color_wall.to_bytes(4, 'little'))
 
     def animation_step(self, param: Any) -> int:
         """Render one animation step per MLX loop tick.
@@ -380,16 +384,6 @@ class MazeRenderer:
                         )
                         self.data[offset:offset+4] = (
                             (self.color_wall).to_bytes(4, 'little'))
-        # Patch the bottom-right corner so wall intersections are filled
-        for wy in range(self.wall_thickness):
-            for wx in range(self.wall_thickness):
-                if self.size_line is not None and self.data is not None:
-                    offset = (
-                        ((cell_y + self.cell_size + wy) * self.size_line) +
-                        ((cell_x + self.cell_size + wx) * 4)
-                    )
-                    self.data[offset:offset+4] = (
-                        self.color_wall.to_bytes(4, 'little'))
 
     def draw_maze(self, maze: List[List[int]]) -> None:
         """Draw the full maze: walls, interiors, 42 pattern, entry/exit, path.
@@ -489,7 +483,7 @@ class MazeRenderer:
             {
                 "theme_name": "Negative",
                 "color_window_bg": 0xFF808080,
-                "color_maze_area": 0xFF5A5A5A,
+                "color_maze_area": 0xFF666666,
                 "color_wall": 0xFF000000,
                 "color_pattern": 0xFF222222,
                 "color_text": 0xFFCCCCCC,
