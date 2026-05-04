@@ -128,7 +128,7 @@ class Maze(Maze_Handler):
     # walk func that takes x y pos and then randomly choose directions to
     # repeatedly walk until one of the conds are met
     # this will draw and sleep between each new cell it has walked
-    def walk(self, filename: str | None) -> list:
+    def walk(self) -> list:
         while True:  # constantly loops until path is found
             if self.first is True:  # get exit cell for the solution/first path
                 cell_y, cell_x = self.exit[0], self.exit[1]
@@ -189,9 +189,10 @@ class Maze(Maze_Handler):
                     break
                 path.append((x, y, dir))  # maze gen will pickup x, y, dir set
                 if self.save_path is True:  # saves the first path for later
-                    self.init_path.append((x, y))
+                    self.init_path.append(dir)
                 x, y = x + self.dir_x[dir], y + self.dir_y[dir]
             if self.save_path is True:  # makes sure first path isnt changed
+                self.init_path.reverse()
                 self.save_path = False
             return path
 
@@ -206,7 +207,7 @@ class Maze(Maze_Handler):
         remaining_cells = (self.width * self.height) - 21  # cells to change
 
         while remaining_cells > 0:
-            for x, y, dir in self.walk(filename):  # runs walk to get next path
+            for x, y, dir in self.walk():  # runs walk to get next path
                 next_x, next_y = x + self.dir_x[dir], y + self.dir_y[dir]
 
                 if self.grid[y][x] > -10:  # verify not 42 logo
@@ -230,26 +231,26 @@ class Maze(Maze_Handler):
         for y, row in enumerate(self.grid):  # creates hexadecimal list
             row_list: list = []
             for x, block in enumerate(row):
-                cell_total: int = 0
-                if y == 0:
-                    cell_total |= 1
-                elif block & self.N != 0:
-                    cell_total |= 4
-                if x == 0:
-                    cell_total |= 8
-                elif block & self.E != 0:
-                    cell_total |= 8
-                if y == len(self.grid):
-                    cell_total |= 1
-                elif block & self.S != 0:
-                    cell_total |= 1
-                if x == len(self.grid[y]):
-                    cell_total |= 2
-                elif block & self.W != 0:
-                    cell_total |= 2
                 if block == -42:
                     row_list.append("F")
                 else:
+                    cell_total: int = 0
+                    if y == 0:
+                        cell_total |= 4
+                    elif block & self.N == 0:
+                        cell_total |= 4
+                    if x == 0:
+                        cell_total |= 2
+                    elif block & self.E == 0:
+                        cell_total |= 2
+                    if y == len(self.grid):
+                        cell_total |= 1
+                    elif block & self.S == 0:
+                        cell_total |= 1
+                    if x == len(row):
+                        cell_total |= 8
+                    elif block & self.W == 0:
+                        cell_total |= 8
                     row_list.append(hex(cell_total)[2:].capitalize())
             save_list.append(row_list)
 
@@ -264,23 +265,18 @@ class Maze(Maze_Handler):
                         file.write("\n")
                     file.write(f"\n{self.entry[0]},{self.entry[1]}")  # ENTRY
                     file.write(f"\n{self.exit[0]},{self.exit[1]}\n")  # EXIT
-                    self.init_path.append((self.exit[0],self.exit[1]))
-                    curr_cell: tuple = self.init_path[0]
                     dir_letter: str = ""
-                    i: int = 1
-                    while i < len(self.init_path):  # creates path taken in str
-                        if (self.init_path[i][0] - curr_cell[0]) < 0:
-                            dir_letter = "E"
-                        elif (self.init_path[i][0] - curr_cell[0]) > 0:
-                            dir_letter = "W"
-                        elif (self.init_path[i][1] - curr_cell[1]) < 0:
+                    for dir in self.init_path:
+                        if dir == 1:
                             dir_letter = "S"
-                        elif (self.init_path[i][1] - curr_cell[1]) > 0:
+                        elif dir == 2:
+                            dir_letter = "E"
+                        elif dir == 4:
                             dir_letter = "N"
-                        curr_cell = self.init_path[i]
-                        self.path_str = f"{self.path_str}{dir_letter}"
-                        file.write(dir_letter)  # writes solution path to file
-                        i += 1
+                        elif dir == 8:
+                            dir_letter = "W"
+                        file.write(dir_letter)
+                    file.write("\n")
             except FileNotFoundError:
                 print("File not found to save to!")
         return save_list
