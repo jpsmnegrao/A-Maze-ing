@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by <joshde-s>, <jpaim-so>*
+*This project has been created as part of the 42 curriculum by joshde-s and jpaim-so*
 
 # A-Maze-ing
 
