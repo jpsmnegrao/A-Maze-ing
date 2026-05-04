@@ -131,7 +131,7 @@ class Maze(Maze_Handler):
     def walk(self) -> list:
         while True:  # constantly loops until path is found
             if self.first is True:  # get exit cell for the solution/first path
-                cell_y, cell_x = self.exit[0], self.exit[1]
+                cell_x, cell_y = self.exit[0], self.exit[1]
                 self.first = False
             else:  # gets a random cell within the grid
                 cell_y: int = random.randint(0, self.height - 1)
@@ -211,9 +211,11 @@ class Maze(Maze_Handler):
                 next_x, next_y = x + self.dir_x[dir], y + self.dir_y[dir]
 
                 if self.grid[y][x] > -10:  # verify not 42 logo
+                    print(f"-{dir}")
                     self.grid[y][x] |= dir  # assigns which wall was used
                     self.grid[y][x] |= self.marked_cell  # sets cell as a path
                 if self.grid[next_y][next_x] > -10:  # verify not 42 logo
+                    print(self.inverted[dir])
                     self.grid[next_y][next_x] |= self.inverted[dir]
                     self.grid[next_y][next_x] |= self.marked_cell
 
@@ -236,11 +238,11 @@ class Maze(Maze_Handler):
                 else:
                     cell_total: int = 0
                     if y == 0:
-                        cell_total |= 4
+                        cell_total |= 1
                     elif block & self.N == 0:
                         cell_total |= 4
                     if x == 0:
-                        cell_total |= 2
+                        cell_total |= 8
                     elif block & self.E == 0:
                         cell_total |= 2
                     if y == len(self.grid):
