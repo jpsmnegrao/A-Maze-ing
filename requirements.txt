@@ -4,4 +4,4 @@ mlx
 flake8==7.1.0
 mypy==1.11.1
 pytest==8.3.3
-./mlx_CLXV/mlx-2.2-py3-none-any.whl
+./mlx-2.2-py3-none-any.whl
