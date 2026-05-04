@@ -6,6 +6,7 @@ Pytest script to test config parsing.
 
 from typing import Any, Dict
 from mlx_renderer import MazeRenderer
+from algorithm.wilson_generator import Maze
 
 
 def make_config(width: int = 9, height: int = 7) -> Dict[str, Any]:
@@ -20,11 +21,17 @@ def make_config(width: int = 9, height: int = 7) -> Dict[str, Any]:
     }
 
 
+def make_renderer(width: int = 9, height: int = 7) -> MazeRenderer:
+    """Build a MazeRenderer with a real Maze instance for testing."""
+    cfg = make_config(width, height)
+    return MazeRenderer(cfg, Maze(cfg))
+
 # ---------- reset_maze ----------
+
 
 def test_reset_maze_cell_size_fits_in_area() -> None:
     """cell_size must fit width*cell and height*cell inside the maze area."""
-    r = MazeRenderer(make_config(9, 7))
+    r = make_renderer(9, 7)
     r.reset_maze()
     assert r.cell_size > 0
     assert r.cell_size * r.maze_width <= r.maze_area_width
@@ -33,7 +40,7 @@ def test_reset_maze_cell_size_fits_in_area() -> None:
 
 def test_reset_maze_wall_thickness_minimum() -> None:
     """wall_thickness must be at least 1, even for tiny cells."""
-    r = MazeRenderer(make_config(50, 50))
+    r = make_renderer(50, 50)
     r.reset_maze()
     assert r.wall_thickness >= 1
     assert r.wall_thickness <= 5
@@ -42,7 +49,7 @@ def test_reset_maze_wall_thickness_minimum() -> None:
 def test_reset_maze_initialises_grid_with_closed_cells() -> None:
     """After reset, self.maze must be height x width filled with 15 (all walls
     closed)."""
-    r = MazeRenderer(make_config(9, 7))
+    r = make_renderer(9, 7)
     r.reset_maze()
     assert len(r.maze) == 7
     assert all(len(row) == 9 for row in r.maze)
@@ -53,7 +60,7 @@ def test_reset_maze_start_position_non_negative() -> None:
     """start_x and start_y must be non-negative for any reasonable maze
     size."""
     for w, h in [(5, 5), (9, 7), (20, 15), (30, 30)]:
-        r = MazeRenderer(make_config(w, h))
+        r = make_renderer(w, h)
         r.reset_maze()
         assert r.start_x >= 0, f"start_x negative for {w}x{h}"
         assert r.start_y >= 0, f"start_y negative for {w}x{h}"
@@ -63,7 +70,7 @@ def test_reset_maze_start_position_non_negative() -> None:
 
 def test_rotate_themes_cycles_through_all() -> None:
     """rotate_themes must cycle through all themes and return to the first."""
-    r = MazeRenderer(make_config())
+    r = make_renderer()
     initial_theme = r.theme_name
     r.rotate_themes()
     assert r.theme_name != initial_theme
@@ -74,7 +81,7 @@ def test_rotate_themes_cycles_through_all() -> None:
 
 def test_rotate_themes_updates_colors() -> None:
     """Rotating must change the color attributes."""
-    r = MazeRenderer(make_config())
+    r = make_renderer()
     initial_wall = r.color_wall
     initial_path = r.color_path
     r.rotate_themes()
@@ -84,7 +91,7 @@ def test_rotate_themes_updates_colors() -> None:
 
 def test_rotate_themes_index_in_range() -> None:
     """current_theme index must always stay within bounds."""
-    r = MazeRenderer(make_config())
+    r = make_renderer()
     for _ in range(10):
         r.rotate_themes()
         assert 0 <= r.current_theme < 3
@@ -97,7 +104,7 @@ def test_constructor_stores_config_values() -> None:
     cfg = make_config(20, 15)
     cfg["ENTRY"] = (3, 4)
     cfg["EXIT"] = (10, 10)
-    r = MazeRenderer(cfg)
+    r = MazeRenderer(cfg, Maze(cfg))
     assert r.maze_width == 20
     assert r.maze_height == 15
     assert r.entry == (3, 4)

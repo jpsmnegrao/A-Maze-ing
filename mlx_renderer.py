@@ -67,13 +67,21 @@ class MazeRenderer:
             [0, 0, 1, 0, 1, 1, 1],
         ]
         # MLX objects (initialized in run_mlx_renderer)
+        # Python object that gives access to all MLX functions
         self.mlx: Optional[Mlx] = None
+        # Internal MLX state needed by every MLX call
         self.mlx_ptr: Optional[Any] = None
+        # The window MLX created on screen
         self.win_ptr: Optional[Any] = None
+        # MLX image buffer for the maze self
         self.image: Optional[Any] = None
+        # Raw pixel bytes of the image
         self.data: Optional[Any] = None
+        # Bits per pixel (4 bytes)
         self.bpp: Optional[Any] = None
+        # Bytes per row of the image
         self.size_line: Optional[int] = None
+        # The order MLX expects color bytes in (little-endian here)
         self.iformat: Optional[Any] = None
         self.bg_image: Optional[Any] = None
         self.bg_data: Optional[Any] = None
@@ -132,6 +140,7 @@ class MazeRenderer:
         """
         if self.mlx is None:
             return
+        self.mlx.mlx_clear_window(self.mlx_ptr, self.win_ptr)
         # Fill the background image with the window background color
         if self.bg_size_line is not None \
                 and self.bg_data is not None:
@@ -435,8 +444,8 @@ class MazeRenderer:
         position in grid coordinates.
         """
         # Center the pattern within the maze grid
-        pattern_col = (len_maze_cols - len(pattern_42[0])) // 2
-        pattern_row = (len_maze_rows - len(pattern_42)) // 2
+        pattern_col = (len_maze_cols // 2) - 3
+        pattern_row = (len_maze_rows // 2) - 2
         pattern_start_x = start_x + (pattern_col * self.cell_size)
         pattern_start_y = start_y + (pattern_row * self.cell_size)
         # Fill the interior of each pattern cell marked with 1
@@ -483,12 +492,12 @@ class MazeRenderer:
             {
                 "theme_name": "Negative",
                 "color_window_bg": 0xFF808080,
-                "color_maze_area": 0xFF666666,
-                "color_wall": 0xFF000000,
-                "color_pattern": 0xFF222222,
-                "color_text": 0xFFCCCCCC,
-                "color_path": 0xFFAAAAAA,
-                "color_cell_bg": 0xFF444444
+                "color_maze_area": 0xFF2A9333,
+                "color_wall": 0xFF1E1E52,
+                "color_pattern": 0xFF1E3852,
+                "color_text": 0xFF381E52,
+                "color_path": 0xFF52381E,
+                "color_cell_bg": 0xFF38521E
             },
             {
                 "theme_name": "42",

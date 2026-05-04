@@ -16,8 +16,12 @@ from algorithm.wilson_generator import Maze
 if len(sys.argv) != 2:
     print("Usage: python3 a_maze_ing.py config.txt")
     sys.exit(1)
-parser: ParserReturn = ParserReturn(sys.argv[1])
-config: Dict[str, Any] = parser.parse_config()
+try:
+    parser: ParserReturn = ParserReturn(sys.argv[1])
+    config: Dict[str, Any] = parser.parse_config()
+except ValueError as error:
+    print(f"Error: {error}")
+    sys.exit(1)
 maze_gen: Maze = Maze(config)
 
 # Disable per-step animation delay during generation
