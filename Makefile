@@ -17,10 +17,9 @@ clean:
 
 lint:
 	flake8 .
-	mypy a_maze_ing.py renderer_mlx.py config.py serializer.py \
-	--warn-return-any --warn-unused-ignores --ignore-missing-imports \
-	--disallow-untyped-defs	--check-untyped-defs
-
+	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports \
+	--disallow-untyped-defs --check-untyped-defs
+ 
 lint-strict:
 	flake8 .
-	mypy a_maze_ing.py renderer_mlx.py config.py serializer.py --strict
+	mypy . --strict

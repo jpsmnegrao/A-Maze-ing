@@ -506,7 +506,7 @@ class MazeRenderer:
                 "color_wall": 0xFF122840,
                 "color_pattern": 0xFF333333,
                 "color_text": 0xFFF5B027,
-                "color_path": 0xFF00BFFF,
+                "color_path": 0xCC253687,
                 "color_cell_bg": 0xFF3D6B8C
             }
         ]

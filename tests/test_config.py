@@ -179,7 +179,8 @@ def test_comments_and_empty_lines() -> None:
     assert isinstance(result["HEIGHT"], int)
 
 
-def test_maze_too_small_for_42_pattern(capsys) -> None:
+def test_maze_too_small_for_42_pattern(
+        capsys: pytest.CaptureFixture[str]) -> None:
     """Test that small maze prints warning but doesn't fail."""
     parser: ParserReturn = ParserReturn("tests/configs/small_maze.txt")
     result: Dict[str, Any] = parser.parse_config()

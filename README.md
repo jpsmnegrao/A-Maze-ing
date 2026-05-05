@@ -115,7 +115,7 @@ other's code (and our own) and overall just had a very good vibe.
 Jaime - I think in spite of not meeting in person for most of the project
 		development it went quite well in terms of what could be expected.
 		Limited availability meant of course that we could not meet in person
-		for most of the project development but that was not a problem at all.
+		but that was not a problem at all.
 
 ### What could be improved
 
