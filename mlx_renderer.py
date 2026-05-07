@@ -490,7 +490,7 @@ class MazeRenderer:
                 "color_cell_bg": 0xFF888888
             },
             {
-                "theme_name": "Negative",
+                "theme_name": "Earth",
                 "color_window_bg": 0xFF808080,
                 "color_maze_area": 0xFF2A9333,
                 "color_wall": 0xFF1E1E52,
