@@ -31,8 +31,10 @@ class Maze(Maze_Handler):
                            for _ in range(self.height)]  # creating 2D list
         # the 0s in the list mean that they are full blocks and not paths yet
         self.sleep_timer: float = 0.05  # EDITABLE-changes time between outputs
-        self.logo_cell: int = -42
-        self.insert_logo()  # replaces 0s in grid list with logo markers
+        self.logo_cell: int = 0
+        if config["WIDTH"] > 8 and config["HEIGHT"] > 8:
+            self.logo_cell = -42
+            self.insert_logo()  # replaces 0s in grid list with logo markers
         self.N, self.E, self.S, self.W = 4, 8, 1, 2  # set direction meaning
         self.dir_x: dict = {self.E: 1, self.W: -1, self.N: 0, self.S: 0}
         self.dir_y: dict = {self.E: 0, self.W: 0, self.N: 1, self.S: -1}
@@ -204,18 +206,19 @@ class Maze(Maze_Handler):
     def generate_maze(self, filename: str | None) -> list:
         entry_x, entry_y = self.entry[0], self.entry[1]
         self.grid[entry_x][entry_y] = self.marked_cell
-        remaining_cells = (self.width * self.height) - 21  # cells to change
+        if self.logo_cell == -42:  # the number of cells to walk through
+            remaining_cells = (self.width * self.height) - 19
+        else:
+            remaining_cells = (self.width * self.height) - 1
 
         while remaining_cells > 0:
             for x, y, dir in self.walk():  # runs walk to get next path
                 next_x, next_y = x + self.dir_x[dir], y + self.dir_y[dir]
 
                 if self.grid[y][x] > -10:  # verify not 42 logo
-                    print(f"-{dir}")
                     self.grid[y][x] |= dir  # assigns which wall was used
                     self.grid[y][x] |= self.marked_cell  # sets cell as a path
                 if self.grid[next_y][next_x] > -10:  # verify not 42 logo
-                    print(self.inverted[dir])
                     self.grid[next_y][next_x] |= self.inverted[dir]
                     self.grid[next_y][next_x] |= self.marked_cell
 
