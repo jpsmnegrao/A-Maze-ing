@@ -204,7 +204,7 @@ class Maze(Maze_Handler):
     # once no cells remain, the maze can have a final return
     # and then calls save
     def generate_maze(self, filename: str | None) -> list:
-        entry_x, entry_y = self.entry[0], self.entry[1]
+        entry_x, entry_y = self.entry[1], self.entry[0]
         self.grid[entry_x][entry_y] = self.marked_cell
         if self.logo_cell == -42:  # the number of cells to walk through
             remaining_cells = (self.width * self.height) - 19
@@ -240,28 +240,27 @@ class Maze(Maze_Handler):
                     row_list.append("F")
                 else:
                     cell_total: int = 0
-                    if y == 0:
-                        cell_total |= 1
+                    if y == len(self.grid):
+                        cell_total |= 4
                     elif block & self.N == 0:
                         cell_total |= 4
-                    if x == 0:
-                        cell_total |= 8
+                    if x == len(row):
+                        cell_total |= 2
                     elif block & self.E == 0:
                         cell_total |= 2
-                    if y == len(self.grid):
+                    if y == 0:
                         cell_total |= 1
                     elif block & self.S == 0:
                         cell_total |= 1
-                    if x == len(row):
+                    if x == 0:
                         cell_total |= 8
                     elif block & self.W == 0:
                         cell_total |= 8
                     row_list.append(hex(cell_total)[2:].capitalize())
             save_list.append(row_list)
 
-        if filename is None:  # save the current state of the grid as hexadecim
-            self.curr_grid = save_list
-        else:
+        self.curr_grid = save_list
+        if filename is not None:  # save the current state of the grid as hexa
             try:
                 with open(filename, "w") as file:
                     for row in save_list:  # writes each cell in hexa to file
