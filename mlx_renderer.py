@@ -73,7 +73,7 @@ class MazeRenderer:
         self.mlx_ptr: Optional[Any] = None
         # The window MLX created on screen
         self.win_ptr: Optional[Any] = None
-        # MLX image buffer for the maze self
+        # MLX image buffer for the maze
         self.image: Optional[Any] = None
         # Raw pixel bytes of the image
         self.data: Optional[Any] = None
@@ -321,9 +321,10 @@ class MazeRenderer:
         self.maze[y][x] = value
         self.draw_cell(x, y, value)
         # Redraw 42 pattern and entry/exit on top so they stay visible
-        self.draw_42_pattern(
-            self.start_x, self.start_y,
-            self.maze_width, self.maze_height, self.pattern_42)
+        if self.maze_width > 8 and self.maze_height > 8:
+            self.draw_42_pattern(
+                self.start_x, self.start_y,
+                self.maze_width, self.maze_height, self.pattern_42)
         self.draw_entry_exit(self.start_x, self.start_y)
         # Advance animation step and push the updated frame to the window
         self.anim_index += 1
@@ -424,7 +425,7 @@ class MazeRenderer:
                             self.data[offset:offset+4] = (
                                 self.color_cell_bg.to_bytes(4, 'little'))
         # Draw 42 pattern if maze is large enough and store its grid position
-        if self.maze_width >= 9 or self.maze_height >= 7:
+        if self.maze_width > 8 and self.maze_height > 8:
             self.draw_42_pattern(
                 self.start_x, self.start_y,
                 self.maze_width, self.maze_height, self.pattern_42)
