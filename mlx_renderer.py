@@ -108,17 +108,19 @@ class MazeRenderer:
         self.mlx = Mlx()
         self.mlx_ptr = self.mlx.mlx_init()
         self.win_ptr = self.mlx.mlx_new_window(
-                       self.mlx_ptr, self.window_height, self.window_width,
+                       self.mlx_ptr, self.window_width, self.window_height,
                        "A-Maze-ing"
                 )
         # Background image buffer (window backdrop)
         self.bg_image = self.mlx.mlx_new_image(
-            self.mlx_ptr, self.window_height, self.window_width)
+            self.mlx_ptr, self.window_width, self.window_height)
         self.bg_data, _, self.bg_size_line, _ = (
             self.mlx.mlx_get_data_addr(self.bg_image))
         # Maze image buffer (cells, walls, path, entry/exit)
         self.image = self.mlx.mlx_new_image(
-                     self.mlx_ptr, self.window_height, self.window_width)
+                     self.mlx_ptr, self.maze_area_width + 10,
+                     self.maze_area_height + 10
+            )
         self.data, self.bpp, self.size_line, self.iformat = (
             self.mlx.mlx_get_data_addr(self.image))
         # Compute cell sizing/offsets and draw the initial frame
