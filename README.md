@@ -89,20 +89,67 @@ SEED=42
 
 #### The Wilson's Algorithm
 
-The Wilson's algorithm, also known as loop-erased random walking, is a unique algorithm compared to many of the other maze generator algorithms as it focuses its randomization in a more structured manner. This is due to the fact that the algorithm begins by having 2 points within the space, it then repeatedly chooses a direction and then tries to move into the neighboring cell in that direction (as long as the neighboring cell is a valid cell). If the cell it tries to move into is a pathway that was created in the current walking step then the algorithm will stop walking, reset back to the point it collided with, and then start walking again. If the path instead finds the other point it is looking for then it will create the path by assigning which walls should be open to get to the point. The algorithm then repeatedly randomly picks cells that have not been turned into paths and tries to walk from there again but this time it will only create a path when it finds its way to a path that was previously created. This is repeatedly done until all valid cells have been walked from and there for all cells should have only 3 or less walls.
+The Wilson's algorithm, also known as loop-erased random walking, is a unique
+        algorithm compared to many of the other maze generator algorithms as it
+        focuses its randomization in a more structured manner. This is due to
+        the fact that the algorithm begins by having 2 points within the space,
+        it then repeatedly chooses a direction and then tries to move into the
+        neighboring cell in that direction (as long as the neighboring cell is
+        a valid cell). If the cell it tries to move into is a pathway that was
+        created in the current walking step then the algorithm will stop
+        walking, reset back to the point it collided with, and then start walking
+        again. If the path instead finds the other point it is looking for then
+        it will create the path by assigning which walls should be open to get to
+        the point. The algorithm then repeatedly randomly picks cells that have
+        not been turned into paths and tries to walk from there again but this
+        time it will only create a path when it finds its way to a path that was
+        previously created. This is repeatedly done until all valid cells have
+        been walked from and there for all cells should have only 3 or less walls.
 
-This algorithm works well compared to many other alogrithms as other algorithms can have a tendency to create very long corridors (backtracking algorithms) or a lot of dead ends (Prim's algorithm). Wilson's algorithm does have some downfalls of its own like for example it can take longer to generate larger mazes as it can take a varied amount of time to find the initial pathways. Wilson's algorithm can also be more difficult to implement as it can very easily try to walk outside of the maze, and therefore needs a lot of counter measures to prevent this from happening.
+This algorithm works well compared to many other alogrithms as other algorithms
+        can have a tendency to create very long corridors (backtracking algorithms)
+        or a lot of dead ends (Prim's algorithm). Wilson's algorithm does have some
+        downfalls of its own like for example it can take longer to generate larger
+        mazes as it can take a varied amount of time to find the initial pathways.
+        Wilson's algorithm can also be more difficult to implement as it can very
+        easily try to walk outside of the maze, and therefore needs a lot of counter
+        measures to prevent this from happening.
 
 ### Reusable Maze Generator
 
-The Wilson's maze generator is built directly through an original Python Class, which along its generation repeatedly saves multiple different states that can be reused depending on the situation that is required of it.
+The Wilson's maze generator is built directly through an original Python Class
+        called Maze, which along its generation repeatedly saves multiple
+        different states that can be reused depending on the situation that is
+        required of it.
 
+- Create a Maze class instance to pull the below reusable variables.
+    (ex. small_maze = Maze("config.txt")).
 - curr_grid is one of the most reusable parts of this generator.
-    - An instance of a maze can be created and then using maze_instance.curr_grid will give the user access to the current hexadecimal information for each cell. This helps to give constant updates as to what the maze looks like as it is being walked and once the maze has finished being generated, it can then directly be used to reproduce the maze by decoding the hexadecimal into walls for each cell. For example a 3 would mean the cell has its north and east walls both closed (this comes from the binary of 0011). By decoding 1 for North, 2 for East, 4 for South and 8 for West, this can easily be reused to recreate the maze in any visual format, or even use it to create lists to then code further logic into.
-- init_path is a useful default saved path which is created once the first path has been found and created. This path can be used to show the solution to the maze (how to get from Entry to Exit following N, E, S, W commands) or can be used to show the initial setup of the maze itself.
-- path_str is the variable that holds the N, E, S, W steps and can be accessed once the inital path has been created. This can be easier to use than the init_path as it is more readable than the hexadecimal code.
-- The save_to_file method can be very useful too as once the maze has been fully generated, it then saves the hexadecimal structure for the maze into a specified file. This can then be read to recreate the maze, its solution path, as well as the entry and exit positions.
-- sleep_timer can be rewritten to have a different value, this will change how quickly or slowly the maze takes to generate as well as how quickly the previous variables are returned, thus making it more reusable as changing this value can change how the maze is generated based on user preference.
+    - An instance of a maze can be created and then using maze_instance.curr_grid
+            will give the user access to the current hexadecimal information for
+            each cell. This helps to give constant updates as to what the maze
+            looks like as it is being walked and once the maze has finished being
+            generated, it can then directly be used to reproduce the maze by decoding
+            the hexadecimal into walls for each cell. For example a 3 would mean the
+            cell has its north and east walls both closed (this comes from the binary
+            of 0011). By decoding 1 for North, 2 for East, 4 for South and 8 for West,
+            this can easily be reused to recreate the maze in any visual format, or
+            even use it to create lists to then code further logic into.
+- init_path is a useful default saved path which is created once the first path has
+        been found and created. This path can be used to show the solution to the
+        maze (how to get from Entry to Exit following N, E, S, W commands) or can
+        be used to show the initial setup of the maze itself.
+- path_str is the variable that holds the N, E, S, W steps and can be accessed
+        once the inital path has been created. This can be easier to use than
+        the init_path as it is more readable than the hexadecimal code.
+- The save_to_file method can be very useful too as once the maze has been fully
+        generated, it then saves the hexadecimal structure for the maze into a
+        specified file. This can then be read to recreate the maze, its solution
+        path, as well as the entry and exit positions.
+- sleep_timer can be rewritten to have a different value, this will change how
+        quickly or slowly the maze takes to generate as well as how quickly the
+        previous variables are returned, thus making it more reusable as changing
+        this value can change how the maze is generated based on user preference.
 
 ## Team and Project Management
 
@@ -129,6 +176,12 @@ Jaime - I think in spite of not meeting in person for most of the project
 		Limited availability meant of course that we could not meet in person
 		but that was not a problem at all.
 
+Naki -  Like Jaime mentioned, our team work and communication seemed to work
+        really well. While personal life was happening, we both communicated
+        proficiently to keep each other updated and informed. We also used
+        git functionalities really well to give each other appropriate
+        access to each others' work.
+
 ### What could be improved
 
 Jaime - It's hard to pinpoint anything in specific when this collaboration
@@ -136,6 +189,14 @@ Jaime - It's hard to pinpoint anything in specific when this collaboration
 		then the communication of certain topics or issues found could have
 		been quicker.
 
+Naki -  To extend on the notion of working mostly remotely, I think more work
+        from campus would have been useful as there were some issues in the way
+        the systems would render on our personal devices compared to campus PCs.
+        Both of using campus computers would help not just with working together
+        but also to find these between different PC issues quicker.
+        From the algorithm side, the algorithm itself automatically makes perfect
+        mazes, so making more algorithms could be useful to show how imperfect
+        mazes could look and how they would have to be managed differently.
 
 ### Tools
 
