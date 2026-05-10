@@ -8,7 +8,7 @@ window.
 
 
 from typing import Dict, List, Tuple, Optional, Any
-from mlx import Mlx  # type: ignore
+from mlx import Mlx
 from algorithm.wilson_generator import Maze
 
 

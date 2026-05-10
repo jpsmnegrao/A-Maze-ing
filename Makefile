@@ -1,25 +1,40 @@
-PY=python3
-PIP=pip3
+VENV    := matrix
+PYTHON  := $(VENV)/bin/python3
+PIP     := $(VENV)/bin/pip
+MAIN    := a_maze_ing.py
+CONFIG  := config.txt
 
-.PHONY: install run debug clean lint lint-strict
+.PHONY: install wheel run debug clean lint lint-strict
+
+all: install
 
 install:
+	python3 -m venv $(VENV)
+	$(PIP) install --upgrade pip
+	$(PIP) install ./mlx-2.2-py3-none-any.whl || $(PIP) install ./mlx-2.2-py3-ubuntu-any.whl
 	$(PIP) install -r requirements.txt
+	$(PIP) install .
+
+wheel:
+	$(PIP) install build
+	$(VENV)/bin/python -m build --wheel --outdir .
 
 run:
-	$(PY) a_maze_ing.py config.txt
+	$(PYTHON) $(MAIN) $(CONFIG)
 
 debug:
-	$(PY) -m pdb a_maze_ing.py config.txt
+	$(PYTHON) -m pdb $(MAIN) $(CONFIG)
 
 clean:
-	rm -rf __pycache__ .mypy_cache .pytest_cache build dist *.egg-info
+	rm -rf $(VENV) build dist *.egg-info .mypy_cache .pytest_cache
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	rm -f maze.txt
 
 lint:
-	flake8 .
-	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports \
-	--disallow-untyped-defs --check-untyped-defs
- 
+	$(VENV)/bin/flake8 .
+	$(VENV)/bin/mypy . --warn-return-any --warn-unused-ignores \
+		--ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+
 lint-strict:
-	flake8 .
-	mypy . --strict
+	$(VENV)/bin/flake8 .
+	$(VENV)/bin/mypy . --strict

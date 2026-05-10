@@ -1,6 +1,7 @@
-/mlx_CLXV/
-/__pycache__/
-/tests/__pycache__/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
 /matrix/
 *.egg-info
-config.txt
+build/
+dist/

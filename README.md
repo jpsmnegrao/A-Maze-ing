@@ -4,8 +4,8 @@
 
 ## Description
 
-This project's objective is to implement a maze generator in Python that takes a
-configuration file, generates a maze, possibly perfect (with a single path
+This project's objective is to implement a maze generator in Python that takes
+a configuration file, generates a maze, possibly perfect (with a single path
 between entrance and exit), and writes it to a file using a hexadecimal wall
 representation.
 
@@ -15,10 +15,12 @@ organizing the code so that the generation logic can be reused later.
 ## Instructions
 
 1. Download the repo
-2. Create a fresh virtual environment - `python3 -m venv venv`
-3. Activate the virtual environment - `source venv/bin/activate`
-4. Install project dependencies - `make install`
-5. Run the script - `python3 a_maze_ing.py config.txt`
+2. Install dependencies and build the mazegen package — `make install` (creates
+   the matrix venv automatically)
+3. Activate the virtual environment - `source matrix/bin/activate`
+4. Run the script - `make run`
+5. To rebuild the mazegen package from sources — `make wheel` - this produces a
+   fresh mazegen-*.whl at the repo root.
 
 You can change the maze configuration by altering the values in the
 `config.txt` file.
@@ -70,8 +72,8 @@ The following keys are required:
 
 Optional:
 
-- `SEED` — integer seed for reproducible generation. If omitted, the maze is
-		   randomized at each run.
+- `SEED` — integer seed for reproducible generation. If no value is given the
+  		   maze is randomized at each run.
 
 Example:
 
@@ -158,16 +160,19 @@ The Wilson's maze generator is built directly through an original Python Class
 - **[joshde-s]** — maze generator (Wilson's algorithm implementation, output
   				   file format, 42 logo placement)
 - **[jpaim-so]** — visual renderer (MLX-based display, animation, theme system,
-  				   user input handling), parser (config file validation), test
-				   suite with AI assistance
+  				   user input handling), parser (config file validation)
 
 ### Planning
 
-We made no specific plans regarding deadlines as we were both going to be with
-limited availability over the last couple of weeks. We keep in touch regularly
-and in spite of not meeting in person during most of the project's development
-we had great communication, we were able to communicate issues we saw with each
-other's code (and our own) and overall just had a very good vibe.
+Given we knew we were both going to be with limited availability over the first
+weeks working on the project we decided to keep the work loosely divided rather
+than setting hard deadlines. Jaime worked on the parser and the visual
+representation while Naki worked on the maze generator and related algorithms.
+
+We keep in touch regularly and in spite of not meeting in person during most of
+the project's development we had great communication, we were able to
+communicate issues we saw with each other's code (and our own) and overall
+just had a very good vibe.
 
 ### What worked well
 
@@ -201,10 +206,10 @@ Naki -  To extend on the notion of working mostly remotely, I think more work
 ### Tools
 
 - Python 3 with type hints
-- pytest for unit and integration testing
 - flake8 and mypy for linting and static type checking
 - MiniLibX for the graphical renderer
 - Git/GitHub for version control
+- pytest for unit and integration testing
 - AI assistance for debugging and documentation (see Resources section)
 
 ### Bonus Features
@@ -215,7 +220,7 @@ The renderer implements several extra features beyond the mandatory requirements
   								loads, instead of appearing all at once.
 - **Animated solution path** — when the path is toggled on, it draws
   							   progressively from entry to exit.
-- **Multiple color themes** — three themes (Dark, Negative, 42) that can be
+- **Multiple color themes** — three themes (Dark, Earth, 42) that can be
   							  cycled at runtime via keyboard.
 - **Live maze regeneration** — pressing the regenerate key reruns the generator
   							   and reloads the maze without restarting the
