@@ -144,6 +144,9 @@ class MazeRenderer:
             return
         self.mlx.mlx_clear_window(self.mlx_ptr, self.win_ptr)
         # Fill the background image with the window background color
+        # Wait until the background image buffer is safe to write to
+        self.mlx.mlx_sync(
+            self.mlx_ptr, self.mlx.SYNC_IMAGE_WRITABLE, self.bg_image)
         if self.bg_size_line is not None \
                 and self.bg_data is not None:
             for y in range(self.window_height):
@@ -152,6 +155,9 @@ class MazeRenderer:
                     self.bg_data[offset:offset+4] = (
                         self.color_window_bg.to_bytes(4, 'little'))
         # Fill the maze area image with the maze area color
+        # Wait until the maze image buffer is safe to write to
+        self.mlx.mlx_sync(
+            self.mlx_ptr, self.mlx.SYNC_IMAGE_WRITABLE, self.image)
         if self.size_line is not None \
                 and self.data is not None:
             for y in range(self.maze_area_height + 10):
@@ -167,6 +173,9 @@ class MazeRenderer:
                                          self.bg_image, 0, 0)
         self.mlx.mlx_put_image_to_window(self.mlx_ptr, self.win_ptr,
                                          self.image, 95, 45)
+        # Force image blits to complete before drawing text on top
+        self.mlx.mlx_sync(
+            self.mlx_ptr, self.mlx.SYNC_WIN_COMPLETED, self.win_ptr)
         # Draw the title and menu strings on top
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 309, 15,
                                 self.color_text, "=== A-Maze-ing ===")
@@ -597,6 +606,10 @@ class MazeRenderer:
         elif keynum in (51, 65435):
             self.rotate_themes()
             self.draw_canvas(self.maze)
+            # Force theme-change frame to fully render before next loop tick
+            if self.mlx is not None:
+                self.mlx.mlx_sync(
+                    self.mlx_ptr, self.mlx.SYNC_WIN_COMPLETED, self.win_ptr)
         elif keynum in (52, 65430):
             if self.mlx is not None:
                 self.mlx.mlx_loop_exit(self.mlx_ptr)
