@@ -185,18 +185,24 @@ class MazeRenderer:
         # Draw the title and menu strings on top
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 309, 15,
                                 self.color_text, "=== A-Maze-ing ===")
+        self.mlx.mlx_do_sync(self.mlx_ptr)
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 678,
                                 self.color_text, '1. Regenerate maze')
+        self.mlx.mlx_do_sync(self.mlx_ptr)
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 700,
                                 self.color_text, '2. Show/hide path from entry'
                                                  ' to exit')
+        self.mlx.mlx_do_sync(self.mlx_ptr)
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 722,
                                 self.color_text, '3. Rotate themes (current - '
                                 f'"{self.theme_name}")')
+        self.mlx.mlx_do_sync(self.mlx_ptr)
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 744,
                                 self.color_text, '4. Exit')
+        self.mlx.mlx_do_sync(self.mlx_ptr)
         self.mlx.mlx_string_put(self.mlx_ptr, self.win_ptr, 100, 766,
                                 self.color_text, 'Choose one (1-4)')
+        self.mlx.mlx_do_sync(self.mlx_ptr)
 
     def reset_maze(self) -> None:
         """Compute cell sizing/offsets and reset the maze grid to all-walls.
