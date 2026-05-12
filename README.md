@@ -225,3 +225,6 @@ The renderer implements several extra features beyond the mandatory requirements
 - **Live maze regeneration** — pressing the regenerate key reruns the generator
   							   and reloads the maze without restarting the
 							   program.
+- **Quit maze functionality** — pressing 4 adds an easy way for the
+                                user to quickly close the maze program.
+
