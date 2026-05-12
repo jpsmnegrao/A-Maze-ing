@@ -37,6 +37,7 @@ EXIT=18,14
 OUTPUT_FILE=maze.txt
 PERFECT=True
 SEED=42
+BONUS_42=True
 ```
 
 ## Reusable Maze Generator
