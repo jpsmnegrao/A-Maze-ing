@@ -74,6 +74,9 @@ Optional:
 
 - `SEED` — integer seed for reproducible generation. If no value is given the
   		   maze is randomized at each run.
+- `BONUS_42` — bool check that when set to True will change the 4 in the 42
+               logo to have an extra 2 cells. This can add a lot of variation
+               to the maze while still using SEED and the same config setup.
 
 Example:
 
