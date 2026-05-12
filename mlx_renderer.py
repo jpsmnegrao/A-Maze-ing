@@ -41,6 +41,7 @@ class MazeRenderer:
         self.exit: Tuple[int, int] = config["EXIT"]
         self.output_file: str = config["OUTPUT_FILE"]
         self.perfect: bool = config["PERFECT"]
+        self.bonus_42: bool = config["BONUS_42"]
         # Window and maze drawing area dimensions in pixels
         self.window_width: int = 800
         self.window_height: int = 800
@@ -59,13 +60,22 @@ class MazeRenderer:
         # Maze grid and solution path loaded from output file
         self.maze: List[List[int]] = []
         self.path: List[str] = []
-        self.pattern_42: List[List[int]] = [
-            [1, 0, 0, 0, 1, 1, 1],
-            [1, 0, 0, 0, 0, 0, 1],
-            [1, 1, 1, 0, 1, 1, 1],
-            [0, 0, 1, 0, 1, 0, 0],
-            [0, 0, 1, 0, 1, 1, 1],
-        ]
+        if self.bonus_42:
+            self.pattern_42: List[List[int]] = [
+                [1, 0, 1, 0, 1, 1, 1],
+                [1, 0, 1, 0, 0, 0, 1],
+                [1, 1, 1, 0, 1, 1, 1],
+                [0, 0, 1, 0, 1, 0, 0],
+                [0, 0, 1, 0, 1, 1, 1],
+            ]
+        else:
+            self.pattern_42 = [
+                [1, 0, 0, 0, 1, 1, 1],
+                [1, 0, 0, 0, 0, 0, 1],
+                [1, 1, 1, 0, 1, 1, 1],
+                [0, 0, 1, 0, 1, 0, 0],
+                [0, 0, 1, 0, 1, 1, 1],
+            ]
         # MLX objects (initialized in run_mlx_renderer)
         # Python object that gives access to all MLX functions
         self.mlx: Optional[Mlx] = None
