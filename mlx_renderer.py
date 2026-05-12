@@ -138,34 +138,40 @@ class MazeRenderer:
 
         Fills the background image, fills the maze drawing area with the theme
         color, draws the maze on top, then pushes both images to the window and
-        overlays the title and menu strings.
+        overlays the title and menu strings. Offset computes the byte position
+        where row y starts. bg_size_line is bytes per row (3200 for an 800-wide
+        image with 4 bytes per pixel).
         """
         if self.mlx is None:
             return
         self.mlx.mlx_clear_window(self.mlx_ptr, self.win_ptr)
-        # Fill the background image with the window background color
-        # Wait until the background image buffer is safe to write to
+        # Wait for the window clear to commit before doing anything else
+        self.mlx.mlx_sync(
+            self.mlx_ptr, self.mlx.SYNC_WIN_COMPLETED, self.win_ptr)
+        # Make sure the background image buffer is safe to write to
         self.mlx.mlx_sync(
             self.mlx_ptr, self.mlx.SYNC_IMAGE_WRITABLE, self.bg_image)
+        # Fill the background image with the window background color
         if self.bg_size_line is not None \
                 and self.bg_data is not None:
+            row_bytes: bytes = (
+                self.color_window_bg.to_bytes(4, 'little') * self.window_width)
             for y in range(self.window_height):
-                for x in range(self.window_width):
-                    offset: int = (y * self.bg_size_line) + (x * 4)
-                    self.bg_data[offset:offset+4] = (
-                        self.color_window_bg.to_bytes(4, 'little'))
-        # Fill the maze area image with the maze area color
-        # Wait until the maze image buffer is safe to write to
+                offset: int = y * self.bg_size_line
+                self.bg_data[offset:offset + len(row_bytes)] = row_bytes
+        # Make sure the maze image buffer is safe to write to
         self.mlx.mlx_sync(
             self.mlx_ptr, self.mlx.SYNC_IMAGE_WRITABLE, self.image)
+        # Fill the maze area image with the maze area color
         if self.size_line is not None \
                 and self.data is not None:
+            row_bytes = (
+                self.color_maze_area.to_bytes(4, 'little') *
+                (self.maze_area_width + 10)
+            )
             for y in range(self.maze_area_height + 10):
-                for x in range(self.maze_area_width + 10):
-                    offset = (y * self.size_line) + (x * 4)
-                    self.data[offset:offset+4] = (
-                        (self.color_maze_area).to_bytes(4, 'little')
-                    )
+                offset = y * self.size_line
+                self.data[offset:offset + len(row_bytes)] = row_bytes
         # Render the maze cells, walls, 42 pattern, entry/exit, and path
         self.draw_maze(maze)
         # Push background and maze images to the window
@@ -173,7 +179,7 @@ class MazeRenderer:
                                          self.bg_image, 0, 0)
         self.mlx.mlx_put_image_to_window(self.mlx_ptr, self.win_ptr,
                                          self.image, 95, 45)
-        # Force image blits to complete before drawing text on top
+        # Force image blits to complete before drawing text
         self.mlx.mlx_sync(
             self.mlx_ptr, self.mlx.SYNC_WIN_COMPLETED, self.win_ptr)
         # Draw the title and menu strings on top
@@ -201,6 +207,7 @@ class MazeRenderer:
         four walls closed).
         """
         # Largest cell size that fits the maze inside the drawing area
+        self.wall_thickness = 1
         self.cell_size = min(
             (self.maze_area_width - self.wall_thickness * 2)
             // self.maze_width,
@@ -209,7 +216,7 @@ class MazeRenderer:
         )
         # Scale wall thickness with cell size, clamped to 1-5 pixels
         self.wall_thickness = max(1, min(self.cell_size // 10, 5))
-        # Center the maze within the drawing area
+        # Center the maze within the drawing area computing top left corner
         maze_pixel_width: int = self.maze_width * self.cell_size
         maze_pixel_height: int = self.maze_height * self.cell_size
         self.start_x = max(
@@ -242,7 +249,7 @@ class MazeRenderer:
                 new_grid.append([int(ch, 16) for ch in line])
             f.readline()
             f.readline()
-            path_line = f.readline().strip()
+            path_line: str = f.readline().strip()
         # Reload renderer state with the new path and animation frames
         self.path = list(path_line)
         self.animation_frames = [
@@ -268,27 +275,25 @@ class MazeRenderer:
         cell_x: int = self.start_x + (col * self.cell_size)
         cell_y: int = self.start_y + (row * self.cell_size)
         # Clear the cell area with the maze area background color
-        for py in range(self.cell_size):
-            for px in range(self.cell_size):
-                if self.size_line is not None and self.data is not None:
-                    offset: int = (
-                        ((cell_y + py) * self.size_line) +
-                        ((cell_x + px) * 4)
-                    )
-                    self.data[offset:offset+4] = (
-                        self.color_maze_area.to_bytes(4, 'little'))
+        if self.size_line is not None and self.data is not None:
+            row_bytes: bytes = (
+                self.color_maze_area.to_bytes(4, 'little') * self.cell_size)
+            for py in range(self.cell_size):
+                offset: int = ((cell_y + py) * self.size_line) + (cell_x * 4)
+                self.data[offset:offset + len(row_bytes)] = row_bytes
         # Draw the four walls based on the bitwise value (N/E/S/W bits)
         self.draw_walls(cell_x, cell_y, value)
         # Fill the inner cell area (inside the walls) with the cell color
-        for py in range(self.wall_thickness, self.cell_size):
-            for px in range(self.wall_thickness, self.cell_size):
-                if self.size_line is not None and self.data is not None:
-                    offset = (
-                        ((cell_y + py) * self.size_line) +
-                        ((cell_x + px) * 4)
-                    )
-                    self.data[offset:offset+4] = (
-                        self.color_cell_bg.to_bytes(4, 'little'))
+        if self.size_line is not None and self.data is not None:
+            inner_width = self.cell_size - self.wall_thickness
+            row_bytes = (
+                self.color_cell_bg.to_bytes(4, 'little') * inner_width)
+            for py in range(self.wall_thickness, self.cell_size):
+                offset = (
+                    ((cell_y + py) * self.size_line) +
+                    ((cell_x + self.wall_thickness) * 4)
+                )
+                self.data[offset:offset + len(row_bytes)] = row_bytes
         # Patch the top-left corner pixel block when the diagonal neighbour
         # has both south and east walls (closes the wall intersection)
         if (col > 0 and row > 0
@@ -298,16 +303,14 @@ class MazeRenderer:
                 or (row > 0 and bool(self.maze[row - 1][col] & W)) \
                 or bool(value & N) \
                 or bool(value & W):
-            for wy in range(self.wall_thickness):
-                for wx in range(self.wall_thickness):
-                    if self.size_line is not None \
-                            and self.data is not None:
-                        offset = (
-                            ((cell_y + wy) * self.size_line) +
-                            ((cell_x + wx) * 4)
-                        )
-                        self.data[offset:offset+4] = (
-                            self.color_wall.to_bytes(4, 'little'))
+            if self.size_line is not None and self.data is not None:
+                row_bytes = (
+                    self.color_wall.to_bytes(
+                        4, 'little') * self.wall_thickness
+                )
+                for wy in range(self.wall_thickness):
+                    offset = ((cell_y + wy) * self.size_line) + (cell_x * 4)
+                    self.data[offset:offset + len(row_bytes)] = row_bytes
 
     def animation_step(self, param: Any) -> int:
         """Render one animation step per MLX loop tick.
@@ -356,55 +359,36 @@ class MazeRenderer:
         south: bool = bool(cell & S)
         east: bool = bool(cell & E)
         west: bool = bool(cell & W)
+        if self.size_line is None or self.data is None:
+            return
+        wall_color_bytes: bytes = self.color_wall.to_bytes(4, 'little')
         # Paint a wall_thickness-wide strip along each closed wall's edge
         if north:
+            row_bytes: bytes = wall_color_bytes * self.cell_size
             for wall_row in range(self.wall_thickness):
-                for x in range(cell_x, cell_x + self.cell_size):
-                    if self.size_line is not None \
-                            and self.data is not None:
-                        offset: int = (
-                                ((cell_y + wall_row)
-                                 * self.size_line) + (x * 4)
-                            )
-                        self.data[offset:offset+4] = (
-                            (self.color_wall).to_bytes(4, 'little'))
+                offset: int = (
+                    ((cell_y + wall_row) * self.size_line) + (cell_x * 4))
+                self.data[offset:offset + len(row_bytes)] = row_bytes
         if south:
+            row_bytes = wall_color_bytes * (self.cell_size +
+                                            self.wall_thickness)
             for wall_row in range(self.wall_thickness):
-                for x in range(
-                        cell_x,
-                        cell_x + self.cell_size + self.wall_thickness):
-                    if self.size_line is not None \
-                            and self.data is not None:
-                        offset = (
-                                (((cell_y + self.cell_size) + wall_row)
-                                 * self.size_line) + (x * 4)
-                            )
-                        self.data[offset:offset+4] = (
-                            (self.color_wall).to_bytes(4, 'little'))
+                offset = (
+                    ((cell_y + self.cell_size + wall_row) * self.size_line) +
+                    (cell_x * 4)
+                )
+                self.data[offset:offset + len(row_bytes)] = row_bytes
         if west:
-            for wall_col in range(self.wall_thickness):
-                for y in range(cell_y, cell_y + self.cell_size):
-                    if self.size_line is not None \
-                            and self.data is not None:
-                        offset = (
-                            (y * self.size_line) +
-                            ((cell_x + wall_col) * 4)
-                        )
-                        self.data[offset:offset+4] = (
-                            (self.color_wall).to_bytes(4, 'little'))
+            col_bytes: bytes = wall_color_bytes * self.wall_thickness
+            for y in range(cell_y, cell_y + self.cell_size):
+                offset = (y * self.size_line) + (cell_x * 4)
+                self.data[offset:offset + len(col_bytes)] = col_bytes
         if east:
-            for wall_col in range(self.wall_thickness):
-                for y in range(
-                        cell_y,
-                        cell_y + self.cell_size + self.wall_thickness):
-                    if self.size_line is not None \
-                            and self.data is not None:
-                        offset = (
-                            (y * self.size_line) +
-                            ((cell_x + self.cell_size + wall_col) * 4)
-                        )
-                        self.data[offset:offset+4] = (
-                            (self.color_wall).to_bytes(4, 'little'))
+            col_bytes = wall_color_bytes * self.wall_thickness
+            for y in range(cell_y, cell_y + self.cell_size +
+                           self.wall_thickness):
+                offset = (y * self.size_line) + ((cell_x + self.cell_size) * 4)
+                self.data[offset:offset + len(col_bytes)] = col_bytes
 
     def draw_maze(self, maze: List[List[int]]) -> None:
         """Draw the full maze: walls, interiors, 42 pattern, entry/exit, path.
@@ -421,20 +405,20 @@ class MazeRenderer:
                 cell: int = maze[row][col]
                 self.draw_walls(cell_x, cell_y, cell)
         # Second pass: fill cell interiors with the cell background color
-        for row in range(len(maze)):
-            for col in range(len(maze[row])):
-                cell_x = self.start_x + (col * self.cell_size)
-                cell_y = self.start_y + (row * self.cell_size)
-                for py in range(self.wall_thickness, self.cell_size):
-                    for px in range(self.wall_thickness, self.cell_size):
-                        if self.size_line is not None \
-                                and self.data is not None:
-                            offset: int = (
-                                ((cell_y + py) * self.size_line) +
-                                ((cell_x + px) * 4)
-                            )
-                            self.data[offset:offset+4] = (
-                                self.color_cell_bg.to_bytes(4, 'little'))
+        if self.size_line is not None and self.data is not None:
+            inner_width: int = self.cell_size - self.wall_thickness
+            row_bytes: bytes = (
+                self.color_cell_bg.to_bytes(4, 'little') * inner_width)
+            for row in range(len(maze)):
+                for col in range(len(maze[row])):
+                    cell_x = self.start_x + (col * self.cell_size)
+                    cell_y = self.start_y + (row * self.cell_size)
+                    for py in range(self.wall_thickness, self.cell_size):
+                        offset: int = (
+                            ((cell_y + py) * self.size_line) +
+                            ((cell_x + self.wall_thickness) * 4)
+                        )
+                        self.data[offset:offset + len(row_bytes)] = row_bytes
         # Draw 42 pattern if maze is large enough and store its grid position
         if self.maze_width > 8 and self.maze_height > 8:
             self.draw_42_pattern(
@@ -456,20 +440,20 @@ class MazeRenderer:
         position in grid coordinates.
         """
         # Center the pattern within the maze grid
-        pattern_col = (len_maze_cols // 2) - 3
-        pattern_row = (len_maze_rows // 2) - 2
-        pattern_start_x = start_x + (pattern_col * self.cell_size)
-        pattern_start_y = start_y + (pattern_row * self.cell_size)
+        pattern_col: int = (len_maze_cols // 2) - 3
+        pattern_row: int = (len_maze_rows // 2) - 2
+        pattern_start_x: int = start_x + (pattern_col * self.cell_size)
+        pattern_start_y: int = start_y + (pattern_row * self.cell_size)
         # Fill the interior of each pattern cell marked with 1
         for row in range(len(pattern_42)):
             for col in range(len(pattern_42[row])):
                 if pattern_42[row][col] == 1:
-                    cell_x = pattern_start_x + (col * self.cell_size)
-                    cell_y = pattern_start_y + (row * self.cell_size)
+                    cell_x: int = pattern_start_x + (col * self.cell_size)
+                    cell_y: int = pattern_start_y + (row * self.cell_size)
                     for py in range(self.wall_thickness, self.cell_size):
                         for px in range(self.wall_thickness, self.cell_size):
-                            pixel_x = cell_x + px
-                            pixel_y = cell_y + py
+                            pixel_x: int = cell_x + px
+                            pixel_y: int = cell_y + py
                             if self.size_line is not None \
                                     and self.data is not None:
                                 if not (
@@ -479,7 +463,7 @@ class MazeRenderer:
                                         or pixel_y > self.maze_area_height
                                         ):
 
-                                    offset = (
+                                    offset: int = (
                                         pixel_y * self.size_line) + (pixel_x
                                                                      * 4)
                                     self.data[offset:offset+4] = (
@@ -534,24 +518,24 @@ class MazeRenderer:
         entry_y: int = start_y + (self.entry[1] * self.cell_size)
         exit_x: int = start_x + (self.exit[0] * self.cell_size)
         exit_y: int = start_y + (self.exit[1] * self.cell_size)
+        if self.size_line is None or self.data is None:
+            return
+        inner_width: int = self.cell_size - self.wall_thickness
+        entry_bytes: bytes = (0xFF00CC00).to_bytes(4, 'little') * inner_width
+        exit_bytes: bytes = (0xFFCC0000).to_bytes(4, 'little') * inner_width
         # Fill cell interiors (skip wall pixels) with entry/exit colors
-        for py in range(self.cell_size):
-            for px in range(self.cell_size):
-                if px < self.wall_thickness or py < self.wall_thickness:
-                    continue
-                if self.size_line is not None and self.data is not None:
-                    entry_offset: int = (
-                        ((entry_y + py) * self.size_line) +
-                        ((entry_x + px) * 4)
-                    )
-                    self.data[entry_offset: entry_offset+4] = (
-                        (0xFF00CC00).to_bytes(4, 'little'))
-                    exit_offset: int = (
-                        ((exit_y + py) * self.size_line) +
-                        ((exit_x + px) * 4)
-                    )
-                    self.data[exit_offset: exit_offset+4] = (
-                        (0xFFCC0000).to_bytes(4, 'little'))
+        for py in range(self.wall_thickness, self.cell_size):
+            entry_offset: int = (
+                ((entry_y + py) * self.size_line) +
+                ((entry_x + self.wall_thickness) * 4)
+            )
+            self.data[entry_offset:entry_offset + len(entry_bytes)] = (
+                entry_bytes)
+            exit_offset: int = (
+                ((exit_y + py) * self.size_line) +
+                ((exit_x + self.wall_thickness) * 4)
+            )
+            self.data[exit_offset:exit_offset + len(exit_bytes)] = exit_bytes
 
     def draw_path(self, start_x: int, start_y: int) -> None:
         """Draw the solution path one cell at a time, animated.
@@ -564,22 +548,19 @@ class MazeRenderer:
         # Start at the entry cell's pixel position
         entry_x: int = start_x + (self.entry[0] * self.cell_size)
         entry_y: int = start_y + (self.entry[1] * self.cell_size)
+        if self.size_line is None or self.data is None:
+            return
+        inner_width: int = self.cell_size - self.wall_thickness
+        row_bytes: bytes = self.color_path.to_bytes(4, 'little') * inner_width
         # Walk the path, painting each cell up to the current animation index
         for step, cell in enumerate(self.path):
             if 0 < step <= self.path_anim_index:
-                for py in range(self.cell_size):
-                    for px in range(self.cell_size):
-                        if px < self.wall_thickness \
-                                or py < self.wall_thickness:
-                            continue
-                        if self.size_line is not None \
-                                and self.data is not None:
-                            offset: int = (
-                                ((entry_y + py) * self.size_line) +
-                                ((entry_x + px) * 4)
-                            )
-                            self.data[offset: offset+4] = (
-                                (self.color_path).to_bytes(4, 'little'))
+                for py in range(self.wall_thickness, self.cell_size):
+                    offset: int = (
+                        ((entry_y + py) * self.size_line) +
+                        ((entry_x + self.wall_thickness) * 4)
+                    )
+                    self.data[offset:offset + len(row_bytes)] = row_bytes
             # Advance the cursor to the next cell based on the direction letter
             if cell == 'E':
                 entry_x += self.cell_size
@@ -594,7 +575,6 @@ class MazeRenderer:
         """Handle keypresses for the maze controls (1-4)."""
         if keynum in (49, 65436):
             self.regenerate()
-            self.reset_maze()
             self.show_path = False
             self.anim_index = 0
             self.draw_canvas(self.maze)
