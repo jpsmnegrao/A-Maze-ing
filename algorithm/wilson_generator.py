@@ -225,7 +225,7 @@ class Maze(Maze_Handler):
                 with open(filename, "w") as file:
                     for row in save_list:
                         for cell in row:
-                            file.write(cell)
+                            file.write(f"{cell}")
                         file.write("\n")
                     file.write(f"\n{self.entry[0]},{self.entry[1]}")
                     file.write(f"\n{self.exit[0]},{self.exit[1]}\n")
