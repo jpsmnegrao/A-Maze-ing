@@ -231,4 +231,7 @@ The renderer implements several extra features beyond the mandatory requirements
 							   program.
 - **Quit maze functionality** — pressing 4 adds an easy way for the
                                 user to quickly close the maze program.
+- **42 logo unique flag**   — added an additional flag that can be used in the
+                              config file to set BONUS_42 to be True or False.
+                              This changes how the 42 pattern is shaped.
 
