@@ -1,8 +1,8 @@
 """Configuration parser for maze generation parameters.
 
 Reads a KEY=VALUE config file, validates required fields (WIDTH, HEIGHT, ENTRY,
-EXIT, OUTPUT_FILE, PERFECT) and optional ones (SEED), and returns a dict ready
-for the generator and renderer.
+EXIT, OUTPUT_FILE, PERFECT) and optional ones (SEED and BONUS_42), and returns
+a dict ready for the generator and renderer.
 """
 
 
@@ -173,7 +173,7 @@ class ParserReturn:
         """Parse and validate a boolean configuration value.
 
         Args:
-            key: The configuration key name (e.g., 'PERFECT')
+            key: The configuration key name (e.g., 'PERFECT', '42BONUS')
             value: The raw string value ('true' or 'false', case-insensitive)
 
         Returns:
@@ -186,5 +186,5 @@ class ParserReturn:
         if perfect in ("true", "false"):
             return perfect == "true"
         else:
-            raise ValueError("Invalid maze perfection indication given to maze"
-                             " generator!")
+            raise ValueError(
+                f"Invalid value for {key.lower()}: must be true or false.")
