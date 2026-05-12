@@ -12,7 +12,7 @@ class Maze_Handler:
         self.height: int = config["HEIGHT"]
         self.entry: Any = config["ENTRY"]
         self.exit: Any = config["EXIT"]
-        self.logo_bonus: bool = config["42BONUS"]
+        self.logo_bonus: bool = config["BONUS_42"]
         if config.get("SEED") is not None:
             random.seed(config["SEED"])
 
