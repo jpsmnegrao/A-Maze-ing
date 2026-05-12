@@ -12,6 +12,7 @@ class Maze_Handler:
         self.height: int = config["HEIGHT"]
         self.entry: Any = config["ENTRY"]
         self.exit: Any = config["EXIT"]
+        self.logo_bonus: bool = config["42BONUS"]
         if config.get("SEED") is not None:
             random.seed(config["SEED"])
 
@@ -59,33 +60,71 @@ class Maze(Maze_Handler):
         """
         maze_center: tuple[int, int] = (int(self.width / 2),
                                         int(self.height / 2))
-        base_logo: list[list[Any]] = [
-            [
-                [maze_center[0] - 3,
-                 maze_center[0] + 1, maze_center[0] + 2, maze_center[0] + 3],
-                maze_center[1] - 2
-                ],
-            [
-                [maze_center[0] - 3,
-                 maze_center[0] + 3],
-                maze_center[1] - 1
-                ],
-            [
-                [maze_center[0] - 3, maze_center[0] - 2, maze_center[0] - 1,
-                 maze_center[0] + 1, maze_center[0] + 2, maze_center[0] + 3],
-                maze_center[1]
-                ],
-            [
-                [maze_center[0] - 1,
-                 maze_center[0] + 1],
-                maze_center[1] + 1
-                ],
-            [
-                [maze_center[0] - 1,
-                 maze_center[0] + 1, maze_center[0] + 2, maze_center[0] + 3],
-                maze_center[1] + 2
-                ]
-        ]
+        base_logo: list[list[Any]] = []
+        if self.logo_bonus is False:
+            base_logo = [
+                [
+                    [maze_center[0] - 3,
+                     maze_center[0] + 1, maze_center[0] + 2,
+                     maze_center[0] + 3],
+                    maze_center[1] - 2
+                    ],
+                [
+                    [maze_center[0] - 3,
+                     maze_center[0] + 3],
+                    maze_center[1] - 1
+                    ],
+                [
+                    [maze_center[0] - 3, maze_center[0] - 2,
+                     maze_center[0] - 1,
+                     maze_center[0] + 1, maze_center[0] + 2,
+                     maze_center[0] + 3],
+                    maze_center[1]
+                    ],
+                [
+                    [maze_center[0] - 1,
+                     maze_center[0] + 1],
+                    maze_center[1] + 1
+                    ],
+                [
+                    [maze_center[0] - 1,
+                     maze_center[0] + 1, maze_center[0] + 2,
+                     maze_center[0] + 3],
+                    maze_center[1] + 2
+                    ]
+            ]
+        else:
+            base_logo = [
+                [
+                    [maze_center[0] - 3, maze_center[0] - 1,
+                     maze_center[0] + 1, maze_center[0] + 2,
+                     maze_center[0] + 3],
+                    maze_center[1] - 2
+                    ],
+                [
+                    [maze_center[0] - 3, maze_center[0] - 1,
+                     maze_center[0] + 3],
+                    maze_center[1] - 1
+                    ],
+                [
+                    [maze_center[0] - 3, maze_center[0] - 2,
+                     maze_center[0] - 1,
+                     maze_center[0] + 1, maze_center[0] + 2,
+                     maze_center[0] + 3],
+                    maze_center[1]
+                    ],
+                [
+                    [maze_center[0] - 1,
+                     maze_center[0] + 1],
+                    maze_center[1] + 1
+                    ],
+                [
+                    [maze_center[0] - 1,
+                     maze_center[0] + 1, maze_center[0] + 2,
+                     maze_center[0] + 3],
+                    maze_center[1] + 2
+                    ]
+            ]
 
         for row in base_logo:
             for x_vals in row[0]:
@@ -175,7 +214,10 @@ class Maze(Maze_Handler):
         entry_x, entry_y = self.entry[1], self.entry[0]
         self.grid[entry_x][entry_y] = self.marked_cell
         if self.logo_cell == -42:
-            remaining_cells = (self.width * self.height) - 19
+            if self.logo_bonus is True:
+                remaining_cells = (self.width * self.height) - 21
+            else:
+                remaining_cells = (self.width * self.height) - 19
         else:
             remaining_cells = (self.width * self.height) - 1
 
