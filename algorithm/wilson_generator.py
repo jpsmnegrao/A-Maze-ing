@@ -33,7 +33,11 @@ class Maze(Maze_Handler):
         self.logo_cell: int = 0
         if config["WIDTH"] > 8 and config["HEIGHT"] > 8:
             self.logo_cell = -42
-            self.insert_logo()
+            try:
+                self.insert_logo()
+            except ValueError as alert:
+                print(alert)
+                exit()
         self.N, self.E, self.S, self.W = 4, 8, 1, 2
         self.dir_x: dict[int, int] = {self.E: 1, self.W: -1, self.N: 0,
                                       self.S: 0}
@@ -86,6 +90,10 @@ class Maze(Maze_Handler):
         for row in base_logo:
             for x_vals in row[0]:
                 self.grid[row[1]][x_vals] = self.logo_cell
+        if self.grid[self.exit[1]][self.exit[0]] == -42:
+            raise ValueError("Exit point within 42 pattern!")
+        elif self.grid[self.entry[1]][self.entry[0]] == -42:
+            raise ValueError("Entry point within 42 pattern!")
 
     def walk(self) -> list[Any]:
         """
