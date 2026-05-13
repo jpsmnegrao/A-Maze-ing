@@ -43,9 +43,6 @@ AI was used for:
   the manual was unclear
 - Debugging rendering issues such as missing wall corners and animation wipe
   behavior
-- Giving suggestions for pytest test cases for the parser, generator output
-  format, and renderer logic, code review and assistance in debugging issues
-  found (code not submitted as part of the repository for the project)
 
 The renderer code itself was written by hand. AI was used as a debugging and
 documentation aid, with all generated suggestions reviewed and tested before
@@ -213,7 +210,6 @@ Naki -  To extend on the notion of working mostly remotely, I think more work
 - flake8 and mypy for linting and static type checking
 - MiniLibX for the graphical renderer
 - Git/GitHub for version control
-- pytest for unit and integration testing
 - AI assistance for debugging and documentation (see Resources section)
 
 ### Bonus Features

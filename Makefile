@@ -26,7 +26,7 @@ debug:
 	$(PYTHON) -m pdb $(MAIN) $(CONFIG)
 
 clean:
-	rm -rf $(VENV) build dist *.egg-info .mypy_cache .pytest_cache
+	rm -rf $(VENV) build dist *.egg-info .mypy_cache
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -f maze.txt
 

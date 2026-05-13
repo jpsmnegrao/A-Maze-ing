@@ -12,7 +12,12 @@ class Maze_Handler:
         self.height: int = config["HEIGHT"]
         self.entry: Any = config["ENTRY"]
         self.exit: Any = config["EXIT"]
-        self.logo_bonus: int = config["BONUS_42"]
+        try:
+            self.logo_bonus: int = config["BONUS_42"]
+        except KeyError:
+            print("Config parsing error: Missing keys for maze",
+                  "generation: ['BONUS_42']")
+            exit()
         if config.get("SEED") is not None:
             random.seed(config["SEED"])
 
