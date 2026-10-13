@@ -13,10 +13,11 @@ def make_maze(tmp_path: Any, seed: int) -> Tuple[
         List[List[int]], Tuple[int, int], Tuple[int, int], str]:
     """Run the generator and return parsed grid, entry, exit, path."""
     cfg: Dict[str, Any] = {
-        "WIDTH": 9, "HEIGHT": 9,
-        "ENTRY": (1, 0), "EXIT": (8, 7),
+        "WIDTH": 15, "HEIGHT": 15,
+        "ENTRY": (1, 0), "EXIT": (13, 13),
         "OUTPUT_FILE": str(tmp_path / "maze.txt"),
-        "PERFECT": True, "SEED": seed,
+        "PERFECT": True, "SEED": seed, "BONUS_42": False,
+
     }
     maze = Maze(cfg)
     maze.sleep_timer = 0

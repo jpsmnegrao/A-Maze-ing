@@ -154,6 +154,33 @@ The Wilson's maze generator is built directly through an original Python Class
         previous variables are returned, thus making it more reusable as changing
         this value can change how the maze is generated based on user preference.
 
+### Tests
+
+The project includes an automated test suite using pytest to verify
+configuration parsing, maze generation, output formatting, maze validity, and
+renderer behavior.
+
+Run the full test suite:
+
+`make test`
+
+To run tests for a specific component:
+
+`make test TEST=tests/test_config.py`
+`make test TEST=tests/test_maze_validity.py`
+
+The suite covers:
+
+- Configuration parsing — missing keys, invalid values, coordinate validation,
+  duplicate keys, and malformed configuration files.
+- Maze generation and output — grid dimensions, hexadecimal cell
+  representation, output formatting, and reproducibility with a fixed seed.
+- Maze validity — closed borders, solution paths, wall consistency, and the 42
+  logo across multiple seeds.
+- Renderer — grid initialization, cell sizing, theme switching, and
+  configuration handling.
+
+
 ## Team and Project Management
 
 ### Roles
@@ -230,4 +257,3 @@ The renderer implements several extra features beyond the mandatory requirements
 - **42 logo unique flag**   — added an additional flag that can be used in the
                               config file to set BONUS_42 to be True or False.
                               This changes how the 42 pattern is shaped.
-

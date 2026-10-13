@@ -22,6 +22,7 @@ def make_config(tmp_path: Path, **overrides: Any) -> Dict[str, Any]:
         "OUTPUT_FILE": str(tmp_path / "maze.txt"),
         "PERFECT": True,
         "SEED": 42,
+        "BONUS_42": False,
     }
     config.update(overrides)
     return config

@@ -4,7 +4,7 @@ PIP     := $(VENV)/bin/pip
 MAIN    := a_maze_ing.py
 CONFIG  := config.txt
 
-.PHONY: install wheel run debug clean lint lint-strict
+.PHONY: install wheel run debug clean lint lint-strict test
 
 all: install
 
@@ -38,3 +38,6 @@ lint:
 lint-strict:
 	$(VENV)/bin/flake8 .
 	$(VENV)/bin/mypy . --strict
+
+test:
+	$(PYTHON) -m pytest -v $(TEST)

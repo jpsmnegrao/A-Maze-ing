@@ -15,3 +15,6 @@ readme = "algorithm/README.md"
 
 [tool.setuptools.packages.find]
 include = ["algorithm*"]
+
+[project.optional-dependencies]
+test = ["pytest"]

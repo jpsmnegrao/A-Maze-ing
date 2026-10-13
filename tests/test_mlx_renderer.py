@@ -18,6 +18,7 @@ def make_config(width: int = 9, height: int = 7) -> Dict[str, Any]:
         "EXIT": (4, 4),
         "OUTPUT_FILE": "maze.txt",
         "PERFECT": True,
+        "BONUS_42": False
     }
 
 
